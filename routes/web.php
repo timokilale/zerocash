@@ -174,13 +174,31 @@ Route::prefix('api')->group(function () {
 
     // Test NIDA Integration
     Route::post('/test-nida', function () {
-        $nidaService = new \App\Services\NidaService();
-        $nidaNumber = request('nida_number', '19900107-23106-00002-99');
+        try {
+            $nidaService = new \App\Services\NidaService();
+            $nidaNumber = request('nida_number', '19900107-23106-00002-99');
 
-        return $nidaService->createCustomerFromNida($nidaNumber, [
-            'email' => 'test@zerocash.com',
-            'phone' => '+255700000000'
-        ]);
+            // Just fetch customer details for verification (don't create customer)
+            $result = $nidaService->fetchCustomerDetails($nidaNumber);
+
+            if ($result['success']) {
+                return [
+                    'success' => true,
+                    'customer' => $result['data'],
+                    'message' => 'NIDA verification successful'
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => $result['error'] ?? 'NIDA verification failed'
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'NIDA service error: ' . $e->getMessage()
+            ];
+        }
     });
 
     // Test Transaction
