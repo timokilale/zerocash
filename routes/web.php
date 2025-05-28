@@ -1,14 +1,106 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\Loan;
 use App\Models\Notification;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\DepositController;
+use App\Http\Controllers\DashboardController;
 
+// Redirect root to login
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
+});
+
+// Authentication Routes
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
+
+Route::post('/login', function () {
+    $credentials = request()->validate([
+        'username' => 'required|string',
+        'password' => 'required|string',
+    ]);
+
+    if (Auth::attempt($credentials)) {
+        request()->session()->regenerate();
+        return redirect()->intended('/banking-dashboard');
+    }
+
+    return back()->withErrors([
+        'username' => 'The provided credentials do not match our records.',
+    ]);
+})->name('login.post');
+
+Route::post('/logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    return redirect('/login');
+})->name('logout');
+
+// Banking Dashboard (Protected)
+Route::get('/banking-dashboard', function () {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $user = Auth::user();
+    $stats = [
+        'total_customers' => User::where('role', 'customer')->count(),
+        'total_accounts' => Account::count(),
+        'total_transactions' => Transaction::count(),
+        'total_loans' => Loan::count(),
+        'total_balance' => Account::sum('balance'),
+        'active_loans' => Loan::where('status', 'active')->count(),
+        'pending_transactions' => Transaction::where('status', 'pending')->count(),
+    ];
+
+    return view('banking.dashboard', compact('user', 'stats'));
+})->name('banking.dashboard');
+
+// Protected Banking Routes (Require Authentication)
+Route::middleware(['auth'])->group(function () {
+
+    // Customer Management Routes
+    Route::resource('customers', CustomerController::class);
+    Route::post('customers/{customer}/create-account', [CustomerController::class, 'createAccount'])->name('customers.create-account');
+
+    // Account Management Routes
+    Route::resource('accounts', AccountController::class);
+    Route::patch('accounts/{account}/toggle-status', [AccountController::class, 'toggleStatus'])->name('accounts.toggle-status');
+
+    // Transaction Management Routes
+    Route::resource('transactions', TransactionController::class);
+    Route::get('transfer', [TransactionController::class, 'showTransferForm'])->name('transfer.form');
+    Route::post('transfer', [TransactionController::class, 'processTransfer'])->name('transfer.process');
+    Route::post('calculate-fee', [TransactionController::class, 'calculateFee'])->name('calculate.fee');
+
+    // Loan Management Routes
+    Route::resource('loans', LoanController::class);
+    Route::post('loans/{loan}/approve', [LoanController::class, 'approve'])->name('loans.approve');
+    Route::post('loans/{loan}/reject', [LoanController::class, 'reject'])->name('loans.reject');
+    Route::post('loans/{loan}/disburse', [LoanController::class, 'disburse'])->name('loans.disburse');
+    Route::post('calculate-loan-details', [LoanController::class, 'calculateLoanDetails'])->name('calculate.loan.details');
+
+    // Employee Management Routes
+    Route::resource('employees', EmployeeController::class);
+    Route::patch('employees/{employee}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
+
+    // Deposit Management Routes
+    Route::resource('deposits', DepositController::class);
+    Route::post('deposits/{deposit}/authorize', [DepositController::class, 'authorize'])->name('deposits.authorize');
+    Route::post('deposits/{deposit}/reject', [DepositController::class, 'reject'])->name('deposits.reject');
+
 });
 
 // Banking System Dashboard Routes
