@@ -113,7 +113,7 @@ Route::middleware(['auth'])->group(function () {
     // Transaction Management Routes
     Route::resource('transactions', TransactionController::class);
     Route::get('transfer', [TransactionController::class, 'showTransferForm'])->name('transfer.form');
-    Route::post('transfer', [TransactionController::class, 'processTransfer'])->name('transfer.process');
+    Route::post('transfer', [TransactionController::class, 'transfer'])->name('transfer.process');
     Route::post('calculate-fee', [TransactionController::class, 'calculateFee'])->name('calculate.fee');
 
     // Loan Management Routes

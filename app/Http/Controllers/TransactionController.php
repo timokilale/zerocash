@@ -14,15 +14,54 @@ class TransactionController extends Controller
     /**
      * Display a listing of transactions.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $transactions = Transaction::with([
+        $query = Transaction::with([
             'senderAccount.user',
             'receiverAccount.user',
             'transactionType'
-        ])
-        ->latest()
-        ->paginate(20);
+        ]);
+
+        // Apply status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Apply transaction type filter
+        if ($request->filled('type')) {
+            $query->where('transaction_type_id', $request->type);
+        }
+
+        // Apply account filter (if coming from account page)
+        if ($request->filled('account')) {
+            $query->where(function($q) use ($request) {
+                $q->where('sender_account_id', $request->account)
+                  ->orWhere('receiver_account_id', $request->account);
+            });
+        }
+
+        // Apply customer filter (if coming from customer page)
+        if ($request->filled('customer')) {
+            $query->whereHas('senderAccount', function($q) use ($request) {
+                $q->where('user_id', $request->customer);
+            })->orWhereHas('receiverAccount', function($q) use ($request) {
+                $q->where('user_id', $request->customer);
+            });
+        }
+
+        // Apply date range filter
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->latest()->paginate(20);
+
+        // Preserve query parameters in pagination links
+        $transactions->appends($request->query());
 
         return view('banking.transactions.index', compact('transactions'));
     }

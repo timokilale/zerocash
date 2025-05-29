@@ -223,7 +223,7 @@
                                     <i class="fas fa-user me-1"></i>
                                     View Customer
                                 </a>
-                                <a href="{{ route('transactions.transfer') }}?from_account={{ $account->id }}" class="btn btn-outline-success">
+                                <a href="{{ route('transfer.form') }}?from_account={{ $account->id }}" class="btn btn-outline-success">
                                     <i class="fas fa-exchange-alt me-1"></i>
                                     Transfer Money
                                 </a>

@@ -30,7 +30,7 @@
                 <form method="POST" action="{{ route('customers.update', $customer->id) }}">
                     @csrf
                     @method('PUT')
-                    
+
                     <!-- Personal Information -->
                     <h6 class="mb-3">
                         <i class="fas fa-user me-2"></i>
@@ -40,8 +40,8 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="first_name" class="form-label">First Name *</label>
-                            <input type="text" name="first_name" id="first_name" 
-                                   class="form-control @error('first_name') is-invalid @enderror" 
+                            <input type="text" name="first_name" id="first_name"
+                                   class="form-control @error('first_name') is-invalid @enderror"
                                    value="{{ old('first_name', $customer->first_name) }}" required>
                             @error('first_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -49,8 +49,8 @@
                         </div>
                         <div class="col-md-6">
                             <label for="last_name" class="form-label">Last Name *</label>
-                            <input type="text" name="last_name" id="last_name" 
-                                   class="form-control @error('last_name') is-invalid @enderror" 
+                            <input type="text" name="last_name" id="last_name"
+                                   class="form-control @error('last_name') is-invalid @enderror"
                                    value="{{ old('last_name', $customer->last_name) }}" required>
                             @error('last_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -61,8 +61,8 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="email" class="form-label">Email Address *</label>
-                            <input type="email" name="email" id="email" 
-                                   class="form-control @error('email') is-invalid @enderror" 
+                            <input type="email" name="email" id="email"
+                                   class="form-control @error('email') is-invalid @enderror"
                                    value="{{ old('email', $customer->email) }}" required>
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -70,8 +70,8 @@
                         </div>
                         <div class="col-md-6">
                             <label for="phone" class="form-label">Phone Number *</label>
-                            <input type="text" name="phone" id="phone" 
-                                   class="form-control @error('phone') is-invalid @enderror" 
+                            <input type="text" name="phone" id="phone"
+                                   class="form-control @error('phone') is-invalid @enderror"
                                    value="{{ old('phone', $customer->phone) }}" required>
                             @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -82,8 +82,8 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="username" class="form-label">Username *</label>
-                            <input type="text" name="username" id="username" 
-                                   class="form-control @error('username') is-invalid @enderror" 
+                            <input type="text" name="username" id="username"
+                                   class="form-control @error('username') is-invalid @enderror"
                                    value="{{ old('username', $customer->username) }}" required>
                             @error('username')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -91,9 +91,9 @@
                         </div>
                         <div class="col-md-6">
                             <label for="nida_number" class="form-label">NIDA Number</label>
-                            <input type="text" name="nida_number" id="nida_number" 
-                                   class="form-control @error('nida_number') is-invalid @enderror" 
-                                   value="{{ old('nida_number', $customer->nida_number) }}" 
+                            <input type="text" name="nida_number" id="nida_number"
+                                   class="form-control @error('nida_number') is-invalid @enderror"
+                                   value="{{ old('nida_number', $customer->nida) }}"
                                    placeholder="e.g., 19900107-23106-00002-99">
                             @error('nida_number')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -104,8 +104,8 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="date_of_birth" class="form-label">Date of Birth</label>
-                            <input type="date" name="date_of_birth" id="date_of_birth" 
-                                   class="form-control @error('date_of_birth') is-invalid @enderror" 
+                            <input type="date" name="date_of_birth" id="date_of_birth"
+                                   class="form-control @error('date_of_birth') is-invalid @enderror"
                                    value="{{ old('date_of_birth', $customer->date_of_birth ? $customer->date_of_birth->format('Y-m-d') : '') }}">
                             @error('date_of_birth')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -127,8 +127,8 @@
 
                     <div class="mb-3">
                         <label for="address" class="form-label">Address</label>
-                        <textarea name="address" id="address" rows="3" 
-                                  class="form-control @error('address') is-invalid @enderror" 
+                        <textarea name="address" id="address" rows="3"
+                                  class="form-control @error('address') is-invalid @enderror"
                                   placeholder="Enter full address">{{ old('address', $customer->address) }}</textarea>
                         @error('address')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -165,7 +165,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="password" class="form-label">New Password</label>
-                            <input type="password" name="password" id="password" 
+                            <input type="password" name="password" id="password"
                                    class="form-control @error('password') is-invalid @enderror">
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -173,7 +173,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="password_confirmation" class="form-label">Confirm New Password</label>
-                            <input type="password" name="password_confirmation" id="password_confirmation" 
+                            <input type="password" name="password_confirmation" id="password_confirmation"
                                    class="form-control">
                         </div>
                     </div>

@@ -95,17 +95,23 @@
                 <div class="d-flex gap-2">
                     <select class="form-select form-select-sm" id="statusFilter">
                         <option value="">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="completed">Completed</option>
-                        <option value="failed">Failed</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                        <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
+                        <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                     </select>
                     <select class="form-select form-select-sm" id="typeFilter">
                         <option value="">All Types</option>
                         @foreach(\App\Models\TransactionType::all() as $type)
-                            <option value="{{ $type->id }}">{{ $type->name }}</option>
+                            <option value="{{ $type->id }}" {{ request('type') == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                         @endforeach
                     </select>
+                    @if(request()->hasAny(['status', 'type', 'account', 'customer', 'date_from', 'date_to']))
+                        <a href="{{ route('transactions.index') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times me-1"></i>
+                            Clear Filters
+                        </a>
+                    @endif
                 </div>
             </div>
             <div class="card-body">
@@ -193,12 +199,12 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="{{ route('transactions.show', $transaction->id) }}" 
+                                                <a href="{{ route('transactions.show', $transaction->id) }}"
                                                    class="btn btn-sm btn-outline-primary" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 @if($transaction->status === 'pending')
-                                                    <a href="{{ route('transactions.edit', $transaction->id) }}" 
+                                                    <a href="{{ route('transactions.edit', $transaction->id) }}"
                                                        class="btn btn-sm btn-outline-secondary" title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
@@ -239,20 +245,20 @@ $(document).ready(function() {
     $('#statusFilter, #typeFilter').change(function() {
         const status = $('#statusFilter').val();
         const type = $('#typeFilter').val();
-        
+
         let url = new URL(window.location);
         if (status) {
             url.searchParams.set('status', status);
         } else {
             url.searchParams.delete('status');
         }
-        
+
         if (type) {
             url.searchParams.set('type', type);
         } else {
             url.searchParams.delete('type');
         }
-        
+
         window.location = url;
     });
 });

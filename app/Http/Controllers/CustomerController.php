@@ -49,7 +49,7 @@ class CustomerController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:20',
             'address' => 'nullable|string',
-            'nida_number' => 'nullable|string|unique:users,nida_number',
+            'nida_number' => 'nullable|string|unique:users,nida',
             'date_of_birth' => 'nullable|date',
             'gender' => 'nullable|in:male,female,other',
             'create_account' => 'nullable|boolean',
@@ -76,9 +76,8 @@ class CustomerController extends Controller
                     'last_name' => $request->last_name,
                     'phone' => $request->phone,
                     'address' => $request->address,
-                    'nida_number' => $request->nida_number,
+                    'nida' => $request->nida_number,
                     'date_of_birth' => $request->date_of_birth,
-                    'gender' => $request->gender,
                     'role' => 'customer',
                     'status' => 'active',
                     'password_auto_generated' => true,
@@ -162,7 +161,7 @@ class CustomerController extends Controller
             'email' => 'required|email|unique:users,email,' . $customer->id,
             'phone' => 'required|string|max:20',
             'address' => 'nullable|string',
-            'nida_number' => 'nullable|string|unique:users,nida_number,' . $customer->id,
+            'nida_number' => 'nullable|string|unique:users,nida,' . $customer->id,
             'date_of_birth' => 'nullable|date',
             'gender' => 'nullable|in:male,female,other',
             'status' => 'required|in:active,inactive,suspended',
@@ -171,8 +170,13 @@ class CustomerController extends Controller
 
         $updateData = $request->only([
             'first_name', 'last_name', 'username', 'email', 'phone', 'address',
-            'nida_number', 'date_of_birth', 'gender', 'status'
+            'date_of_birth', 'gender', 'status'
         ]);
+
+        // Map nida_number to nida for database
+        if ($request->filled('nida_number')) {
+            $updateData['nida'] = $request->nida_number;
+        }
 
         // Update password if provided
         if ($request->filled('password')) {

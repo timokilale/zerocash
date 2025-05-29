@@ -66,8 +66,9 @@ class Loan extends Model
                 $loan->term_months
             );
 
-            // Set outstanding balance
-            $loan->outstanding_balance = $loan->principal_amount;
+            // Set outstanding balance to total amount (principal + interest)
+            $totalPayment = $loan->monthly_payment * $loan->term_months;
+            $loan->outstanding_balance = $totalPayment;
 
             // Set due date
             if ($loan->issued_date) {
@@ -252,5 +253,30 @@ class Loan extends Model
     public function customer()
     {
         return $this->account->user();
+    }
+
+    /**
+     * Get the total interest amount for this loan.
+     */
+    public function getTotalInterestAttribute(): float
+    {
+        $totalPayment = $this->monthly_payment * $this->term_months;
+        return $totalPayment - $this->principal_amount;
+    }
+
+    /**
+     * Get the total payment amount for this loan.
+     */
+    public function getTotalPaymentAttribute(): float
+    {
+        return $this->monthly_payment * $this->term_months;
+    }
+
+    /**
+     * Get the amount paid so far.
+     */
+    public function getAmountPaidAttribute(): float
+    {
+        return $this->total_payment - $this->outstanding_balance;
     }
 }

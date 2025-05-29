@@ -114,6 +114,22 @@ class Account extends Model
     }
 
     /**
+     * Alias for sentTransactions (for backward compatibility).
+     */
+    public function senderTransactions()
+    {
+        return $this->hasMany(Transaction::class, 'sender_account_id');
+    }
+
+    /**
+     * Alias for receivedTransactions (for backward compatibility).
+     */
+    public function receiverTransactions()
+    {
+        return $this->hasMany(Transaction::class, 'receiver_account_id');
+    }
+
+    /**
      * Get all transactions (sent and received).
      */
     public function transactions()

@@ -28,6 +28,7 @@ class User extends Authenticatable
         'address',
         'nida',
         'date_of_birth',
+        'gender',
         'role',
         'status',
         'password_auto_generated',

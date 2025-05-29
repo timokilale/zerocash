@@ -23,7 +23,7 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('transfer.process') }}" id="transferForm">
                     @csrf
-                    
+
                     <!-- Transfer Type -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -69,14 +69,14 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <label for="sender_account_id" class="form-label">From Account *</label>
-                            <select name="sender_account_id" id="sender_account_id" 
+                            <select name="sender_account_id" id="sender_account_id"
                                     class="form-select @error('sender_account_id') is-invalid @enderror" required>
                                 <option value="">Select Source Account</option>
                                 @foreach($accounts as $account)
-                                    <option value="{{ $account->id }}" 
+                                    <option value="{{ $account->id }}"
                                             data-balance="{{ $account->balance }}"
-                                            {{ old('sender_account_id') == $account->id || request('account') == $account->id ? 'selected' : '' }}>
-                                        {{ $account->account_number }} - {{ $account->user->first_name }} {{ $account->user->last_name }} 
+                                            {{ old('sender_account_id') == $account->id || request('account') == $account->id || request('from_account') == $account->id ? 'selected' : '' }}>
+                                        {{ $account->account_number }} - {{ $account->user->first_name }} {{ $account->user->last_name }}
                                         ({{ $account->accountType->name }}) - Balance: TSh {{ number_format($account->balance, 2) }}
                                     </option>
                                 @endforeach
@@ -93,12 +93,12 @@
                         <div class="row mb-3">
                             <div class="col-12">
                                 <label for="receiver_account_id" class="form-label">To Account *</label>
-                                <select name="receiver_account_id" id="receiver_account_id" 
+                                <select name="receiver_account_id" id="receiver_account_id"
                                         class="form-select @error('receiver_account_id') is-invalid @enderror">
                                     <option value="">Select Destination Account</option>
                                     @foreach($accounts as $account)
                                         <option value="{{ $account->id }}" {{ old('receiver_account_id') == $account->id ? 'selected' : '' }}>
-                                            {{ $account->account_number }} - {{ $account->user->first_name }} {{ $account->user->last_name }} 
+                                            {{ $account->account_number }} - {{ $account->user->first_name }} {{ $account->user->last_name }}
                                             ({{ $account->accountType->name }})
                                         </option>
                                     @endforeach
@@ -115,19 +115,19 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="external_bank" class="form-label">Bank Name *</label>
-                                <input type="text" name="external_bank" id="external_bank" 
+                                <input type="text" name="external_bank" id="external_bank"
                                        class="form-control" placeholder="e.g., CRDB Bank">
                             </div>
                             <div class="col-md-6">
                                 <label for="external_account" class="form-label">Account Number *</label>
-                                <input type="text" name="external_account" id="external_account" 
+                                <input type="text" name="external_account" id="external_account"
                                        class="form-control" placeholder="Enter account number">
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-12">
                                 <label for="external_name" class="form-label">Account Holder Name *</label>
-                                <input type="text" name="external_name" id="external_name" 
+                                <input type="text" name="external_name" id="external_name"
                                        class="form-control" placeholder="Enter account holder name">
                             </div>
                         </div>
@@ -148,7 +148,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="mobile_number" class="form-label">Mobile Number *</label>
-                                <input type="text" name="mobile_number" id="mobile_number" 
+                                <input type="text" name="mobile_number" id="mobile_number"
                                        class="form-control" placeholder="+255...">
                             </div>
                         </div>
@@ -158,8 +158,8 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="amount" class="form-label">Amount (TSh) *</label>
-                            <input type="number" name="amount" id="amount" 
-                                   class="form-control @error('amount') is-invalid @enderror" 
+                            <input type="number" name="amount" id="amount"
+                                   class="form-control @error('amount') is-invalid @enderror"
                                    value="{{ old('amount') }}" min="1" step="0.01" required>
                             @error('amount')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -169,7 +169,7 @@
                             <label for="transaction_type_id" class="form-label">Transaction Type</label>
                             <select name="transaction_type_id" id="transaction_type_id" class="form-select">
                                 @foreach(\App\Models\TransactionType::all() as $type)
-                                    <option value="{{ $type->id }}" 
+                                    <option value="{{ $type->id }}"
                                             data-fee-type="{{ $type->fee_type }}"
                                             data-fee-amount="{{ $type->fee_amount }}"
                                             {{ $type->code === 'TRF' ? 'selected' : '' }}>
@@ -182,8 +182,8 @@
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
-                        <textarea name="description" id="description" rows="3" 
-                                  class="form-control @error('description') is-invalid @enderror" 
+                        <textarea name="description" id="description" rows="3"
+                                  class="form-control @error('description') is-invalid @enderror"
                                   placeholder="Enter transfer description">{{ old('description') }}</textarea>
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -241,9 +241,9 @@ $(document).ready(function() {
     // Transfer type change
     $('input[name="transfer_type"]').change(function() {
         const type = $(this).val();
-        
+
         $('#internalFields, #externalFields, #mobileFields').hide();
-        
+
         if (type === 'internal') {
             $('#internalFields').show();
         } else if (type === 'external') {
@@ -251,7 +251,7 @@ $(document).ready(function() {
         } else if (type === 'mobile') {
             $('#mobileFields').show();
         }
-        
+
         calculateFee();
     });
 
@@ -259,7 +259,7 @@ $(document).ready(function() {
     $('#sender_account_id').change(function() {
         const selectedOption = $(this).find('option:selected');
         const balance = selectedOption.data('balance');
-        
+
         if (balance !== undefined) {
             $('#senderBalance').html(`<strong>Available Balance: TSh ${parseFloat(balance).toLocaleString()}</strong>`);
         } else {
@@ -277,24 +277,24 @@ $(document).ready(function() {
         const typeOption = $('#transaction_type_id option:selected');
         const feeType = typeOption.data('fee-type');
         const feeAmount = parseFloat(typeOption.data('fee-amount')) || 0;
-        
+
         let fee = 0;
         if (feeType === 'fixed') {
             fee = feeAmount;
         } else if (feeType === 'percentage') {
             fee = (amount * feeAmount) / 100;
         }
-        
+
         const total = amount + fee;
-        
+
         $('#displayAmount').text(`TSh ${amount.toLocaleString()}`);
         $('#displayFee').text(`TSh ${fee.toLocaleString()}`);
         $('#displayTotal').text(`TSh ${total.toLocaleString()}`);
-        
+
         // Check if sender has sufficient balance
         const senderOption = $('#sender_account_id option:selected');
         const balance = parseFloat(senderOption.data('balance')) || 0;
-        
+
         if (total > balance && amount > 0) {
             $('#submitBtn').prop('disabled', true).html('<i class="fas fa-exclamation-triangle me-1"></i> Insufficient Balance');
         } else {
