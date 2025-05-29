@@ -10,6 +10,16 @@ use Illuminate\Validation\Rule;
 class BranchController extends Controller
 {
     /**
+     * Check if user has admin access for branch management.
+     */
+    private function checkAdminAccess()
+    {
+        if (!auth()->user() || !in_array(auth()->user()->role, ['admin', 'root'])) {
+            abort(403, 'Access denied. Only administrators can manage branches.');
+        }
+    }
+
+    /**
      * Display a listing of branches.
      */
     public function index()
@@ -27,6 +37,8 @@ class BranchController extends Controller
      */
     public function create()
     {
+        $this->checkAdminAccess();
+
         // Get potential managers (admin and staff users)
         $managers = User::whereIn('role', ['admin', 'staff'])
             ->where('status', 'active')
@@ -40,6 +52,7 @@ class BranchController extends Controller
      */
     public function store(Request $request)
     {
+        $this->checkAdminAccess();
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:branches,name',
             'code' => 'required|string|max:10|unique:branches,code',
@@ -78,8 +91,10 @@ class BranchController extends Controller
      */
     public function edit(string $id)
     {
+        $this->checkAdminAccess();
+
         $branch = Branch::findOrFail($id);
-        
+
         // Get potential managers (admin and staff users)
         $managers = User::whereIn('role', ['admin', 'staff'])
             ->where('status', 'active')
@@ -93,6 +108,8 @@ class BranchController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $this->checkAdminAccess();
+
         $branch = Branch::findOrFail($id);
 
         $validated = $request->validate([
@@ -121,6 +138,8 @@ class BranchController extends Controller
      */
     public function destroy(string $id)
     {
+        $this->checkAdminAccess();
+
         $branch = Branch::findOrFail($id);
 
         // Check if branch has associated records

@@ -13,6 +13,9 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\DepositController;
+use App\Http\Controllers\WithdrawalController;
+use App\Http\Controllers\TransferController;
+use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BranchController;
 
@@ -38,7 +41,7 @@ Route::post('/login', function () {
         // Role-based redirect
         $user = Auth::user();
         if ($user->role === 'customer') {
-            return redirect()->intended('/customer-dashboard');
+            return redirect()->intended('/customer/dashboard');
         } else {
             return redirect()->intended('/banking-dashboard');
         }
@@ -56,19 +59,10 @@ Route::post('/logout', function () {
     return redirect('/login');
 })->name('logout');
 
-// Customer Dashboard (Protected)
+// Legacy customer dashboard redirect
 Route::get('/customer-dashboard', function () {
-    if (!Auth::check() || Auth::user()->role !== 'customer') {
-        return redirect()->route('login');
-    }
-
-    $user = Auth::user();
-    $account = $user->accounts()->first();
-    $loans = $user->accounts()->with('loans.loanType')->get()->pluck('loans')->flatten();
-    $notifications = $user->notifications()->latest()->take(5)->get();
-
-    return view('customer.dashboard', compact('user', 'account', 'loans', 'notifications'));
-})->name('customer.dashboard');
+    return redirect()->route('customer.dashboard');
+});
 
 // Banking Dashboard (Protected - Admin/Staff only)
 Route::get('/banking-dashboard', function () {
@@ -90,18 +84,10 @@ Route::get('/banking-dashboard', function () {
     return view('banking.dashboard', compact('user', 'stats'));
 })->name('banking.dashboard');
 
-// Customer Routes (Customer role only)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/customer/loans/apply', [LoanController::class, 'customerApply'])->name('customer.loans.apply');
-    Route::post('/customer/loans/apply', [LoanController::class, 'customerStore'])->name('customer.loans.store');
-    Route::get('/customer/loans/{loan}/repay', [LoanController::class, 'customerRepay'])->name('customer.loans.repay');
-    Route::post('/customer/loans/{loan}/repay', [LoanController::class, 'customerProcessRepayment'])->name('customer.loans.process-repayment');
-    Route::get('/customer/loans', [LoanController::class, 'customerIndex'])->name('customer.loans.index');
-    Route::get('/customer/loans/{loan}', [LoanController::class, 'customerShow'])->name('customer.loans.show');
-});
+// Customer Routes (Customer role only) - MOVED TO SECURE SECTION BELOW
 
-// Protected Banking Routes (Require Authentication - Admin/Staff only)
-Route::middleware(['auth'])->group(function () {
+// Protected Banking Routes (Admin/Staff only)
+Route::middleware(['auth', 'role:admin,staff,manager'])->group(function () {
 
     // Customer Management Routes
     Route::resource('customers', CustomerController::class);
@@ -141,10 +127,49 @@ Route::middleware(['auth'])->group(function () {
     Route::post('deposits/{deposit}/authorize', [DepositController::class, 'authorize'])->name('deposits.authorize');
     Route::post('deposits/{deposit}/reject', [DepositController::class, 'reject'])->name('deposits.reject');
 
+    // Withdrawal Management (Employee Only)
+    Route::resource('withdrawals', WithdrawalController::class);
+    Route::post('withdrawals/{withdrawal}/authorize', [WithdrawalController::class, 'authorize'])->name('withdrawals.authorize');
+    Route::post('withdrawals/{withdrawal}/reject', [WithdrawalController::class, 'reject'])->name('withdrawals.reject');
+
+    // Money Transfers (Employee + Customer)
+    Route::get('transfers/create', [TransferController::class, 'create'])->name('transfers.create');
+    Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
+    Route::get('transfers/account-details', [TransferController::class, 'getAccountDetails'])->name('transfers.account-details');
+
 });
 
-// Banking System Dashboard Routes
-Route::get('/dashboard', function () {
+// Customer Banking Routes
+Route::middleware(['auth', 'role:customer'])->prefix('customer')->name('customer.')->group(function () {
+
+    // Customer Dashboard
+    Route::get('dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
+
+    // Transaction History
+    Route::get('transactions', [CustomerDashboardController::class, 'transactions'])->name('transactions');
+    Route::get('transactions/statement-options', [CustomerDashboardController::class, 'showStatementOptions'])->name('transactions.statement-options');
+    Route::get('transactions/print-statement', [CustomerDashboardController::class, 'printStatement'])->name('transactions.print-statement');
+
+    // Account Details
+    Route::get('accounts/{account}', [CustomerDashboardController::class, 'account'])->name('account');
+
+    // Money Transfers (Customer can transfer from their own accounts)
+    Route::get('transfers/create', [TransferController::class, 'create'])->name('transfers.create');
+    Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
+    Route::get('transfers/account-details', [TransferController::class, 'getAccountDetails'])->name('transfers.account-details');
+
+    // Customer Loan Management (Secure)
+    Route::get('loans/apply', [LoanController::class, 'customerApply'])->name('loans.apply');
+    Route::post('loans/apply', [LoanController::class, 'customerStore'])->name('loans.store');
+    Route::get('loans/{loan}/repay', [LoanController::class, 'customerRepay'])->name('loans.repay');
+    Route::post('loans/{loan}/repay', [LoanController::class, 'customerProcessRepayment'])->name('loans.process-repayment');
+    Route::get('loans', [LoanController::class, 'customerIndex'])->name('loans.index');
+    Route::get('loans/{loan}', [LoanController::class, 'customerShow'])->name('loans.show');
+
+});
+
+// Banking System Dashboard Routes (ADMIN ONLY)
+Route::middleware(['auth', 'role:admin,staff,manager'])->get('/dashboard', function () {
     $stats = [
         'total_customers' => User::where('role', 'customer')->count(),
         'total_accounts' => Account::count(),
@@ -161,8 +186,8 @@ Route::get('/dashboard', function () {
     ]);
 })->name('dashboard');
 
-// API Routes for testing
-Route::prefix('api')->group(function () {
+// API Routes for testing (ADMIN ONLY)
+Route::prefix('api')->middleware(['auth', 'role:admin,root'])->group(function () {
 
     // Customer Management
     Route::get('/customers', function () {

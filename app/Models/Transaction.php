@@ -73,6 +73,19 @@ class Transaction extends Model
     }
 
     /**
+     * Generate a unique reference number for transfers.
+     */
+    public static function generateReferenceNumber(): string
+    {
+        do {
+            // Generate reference number: REF + YYYYMMDD + 6 random digits
+            $referenceNumber = 'REF' . date('Ymd') . str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (static::where('reference', $referenceNumber)->exists());
+
+        return $referenceNumber;
+    }
+
+    /**
      * Calculate transaction fee based on amount and transaction type.
      */
     public static function calculateFee(float $amount, int $transactionTypeId): float

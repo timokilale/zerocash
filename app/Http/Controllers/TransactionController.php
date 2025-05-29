@@ -147,7 +147,6 @@ class TransactionController extends Controller
             'receiver_account_id' => 'required|exists:accounts,id|different:sender_account_id',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
-            'reference' => 'nullable|string|max:100',
         ]);
 
         try {
@@ -158,13 +157,16 @@ class TransactionController extends Controller
                     ->withInput();
             }
 
+            // Auto-generate reference number
+            $referenceNumber = Transaction::generateReferenceNumber();
+
             $transaction = Transaction::create([
                 'sender_account_id' => $request->sender_account_id,
                 'receiver_account_id' => $request->receiver_account_id,
                 'transaction_type_id' => $transferType->id,
                 'amount' => $request->amount,
                 'description' => $request->description,
-                'reference' => $request->reference,
+                'reference' => $referenceNumber,
                 'status' => 'pending',
             ]);
 

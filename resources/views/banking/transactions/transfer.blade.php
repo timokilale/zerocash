@@ -190,6 +190,14 @@
                         @enderror
                     </div>
 
+                    <!-- Auto-Generated Reference Info -->
+                    <div class="mb-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Reference Number:</strong> A unique reference number will be automatically generated for this transfer for easy tracking and identification.
+                        </div>
+                    </div>
+
                     <!-- Fee Calculation -->
                     <div class="card bg-light mb-4">
                         <div class="card-body">

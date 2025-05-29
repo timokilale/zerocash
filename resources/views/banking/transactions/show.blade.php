@@ -35,8 +35,17 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <h6 class="text-muted">Transaction Reference</h6>
-                        <p class="h5 text-primary">{{ $transaction->reference }}</p>
+                        <h6 class="text-muted">
+                            <i class="fas fa-hashtag me-1"></i>
+                            Transaction Reference
+                        </h6>
+                        <div class="d-flex align-items-center">
+                            <p class="h5 text-primary mb-0 me-2" id="referenceNumber">{{ $transaction->reference }}</p>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="copyReference()" title="Copy Reference">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Use this reference for inquiries and tracking</small>
                     </div>
                     <div class="col-md-6">
                         <h6 class="text-muted">Transaction Type</h6>
@@ -238,4 +247,64 @@
     }
 }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+function copyReference() {
+    const referenceText = document.getElementById('referenceNumber').textContent;
+
+    // Use the modern clipboard API if available
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(referenceText).then(function() {
+            // Show success message
+            showCopySuccess();
+        }).catch(function(err) {
+            // Fallback to older method
+            fallbackCopyTextToClipboard(referenceText);
+        });
+    } else {
+        // Fallback for older browsers
+        fallbackCopyTextToClipboard(referenceText);
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showCopySuccess();
+        }
+    } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+    }
+
+    document.body.removeChild(textArea);
+}
+
+function showCopySuccess() {
+    // Change button text temporarily
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check text-success"></i>';
+    button.classList.add('btn-success');
+    button.classList.remove('btn-outline-secondary');
+
+    setTimeout(function() {
+        button.innerHTML = originalHTML;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+</script>
 @endpush

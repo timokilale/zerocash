@@ -25,6 +25,8 @@ class EmployeeController extends Controller
      */
     public function index()
     {
+        $this->checkAdminAccess();
+
         $employees = Employee::with(['user', 'branch'])
             ->withTrashed() // Include soft deleted employees
             ->latest()
@@ -161,6 +163,8 @@ class EmployeeController extends Controller
      */
     public function show($id)
     {
+        $this->checkAdminAccess();
+
         // Find employee including soft-deleted ones
         $employee = Employee::withTrashed()
             ->with(['user', 'branch'])
