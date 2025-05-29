@@ -102,40 +102,15 @@
                 </div>
                 <h3 class="mb-4">Banking System</h3>
                 <p class="mb-4">Secure, Modern, and Feature-Rich Banking Platform</p>
-                
-                <div class="features">
-                    <div class="feature-item">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Secure Authentication</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-money-bill-transfer"></i>
-                        <span>Automatic Loan Disbursement</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-calculator"></i>
-                        <span>Smart Fee Calculation</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-bell"></i>
-                        <span>Real-time Notifications</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-id-card"></i>
-                        <span>NIDA Integration</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Interest Rate Algorithm</span>
-                    </div>
-                </div>
+
+
             </div>
-            
+
             <!-- Right Side - Login Form -->
             <div class="col-md-6 login-right">
                 <h2 class="mb-4 text-center">Welcome Back</h2>
                 <p class="text-muted text-center mb-4">Please sign in to your account</p>
-                
+
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <ul class="mb-0">
@@ -145,18 +120,18 @@
                         </ul>
                     </div>
                 @endif
-                
+
                 <form method="POST" action="{{ route('login.post') }}">
                     @csrf
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <input type="text" class="form-control" id="username" name="username" 
+                            <input type="text" class="form-control" id="username" name="username"
                                    value="{{ old('username') }}" required autofocus>
                         </div>
                     </div>
-                    
+
                     <div class="mb-4">
                         <label for="password" class="form-label">Password</label>
                         <div class="input-group">
@@ -164,12 +139,12 @@
                             <input type="password" class="form-control" id="password" name="password" required>
                         </div>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-login">
                         <i class="fas fa-sign-in-alt me-2"></i>Sign In
                     </button>
                 </form>
-                
+
                 <!-- Demo Credentials -->
                 <div class="credentials-info">
                     <h6><i class="fas fa-info-circle"></i> Demo Credentials</h6>
@@ -186,7 +161,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

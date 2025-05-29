@@ -33,7 +33,14 @@ Route::post('/login', function () {
 
     if (Auth::attempt($credentials)) {
         request()->session()->regenerate();
-        return redirect()->intended('/banking-dashboard');
+
+        // Role-based redirect
+        $user = Auth::user();
+        if ($user->role === 'customer') {
+            return redirect()->intended('/customer-dashboard');
+        } else {
+            return redirect()->intended('/banking-dashboard');
+        }
     }
 
     return back()->withErrors([
@@ -48,9 +55,23 @@ Route::post('/logout', function () {
     return redirect('/login');
 })->name('logout');
 
-// Banking Dashboard (Protected)
+// Customer Dashboard (Protected)
+Route::get('/customer-dashboard', function () {
+    if (!Auth::check() || Auth::user()->role !== 'customer') {
+        return redirect()->route('login');
+    }
+
+    $user = Auth::user();
+    $account = $user->accounts()->first();
+    $loans = $user->accounts()->with('loans.loanType')->get()->pluck('loans')->flatten();
+    $notifications = $user->notifications()->latest()->take(5)->get();
+
+    return view('customer.dashboard', compact('user', 'account', 'loans', 'notifications'));
+})->name('customer.dashboard');
+
+// Banking Dashboard (Protected - Admin/Staff only)
 Route::get('/banking-dashboard', function () {
-    if (!Auth::check()) {
+    if (!Auth::check() || Auth::user()->role === 'customer') {
         return redirect()->route('login');
     }
 
@@ -68,7 +89,17 @@ Route::get('/banking-dashboard', function () {
     return view('banking.dashboard', compact('user', 'stats'));
 })->name('banking.dashboard');
 
-// Protected Banking Routes (Require Authentication)
+// Customer Routes (Customer role only)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/customer/loans/apply', [LoanController::class, 'customerApply'])->name('customer.loans.apply');
+    Route::post('/customer/loans/apply', [LoanController::class, 'customerStore'])->name('customer.loans.store');
+    Route::get('/customer/loans/{loan}/repay', [LoanController::class, 'customerRepay'])->name('customer.loans.repay');
+    Route::post('/customer/loans/{loan}/repay', [LoanController::class, 'customerProcessRepayment'])->name('customer.loans.process-repayment');
+    Route::get('/customer/loans', [LoanController::class, 'customerIndex'])->name('customer.loans.index');
+    Route::get('/customer/loans/{loan}', [LoanController::class, 'customerShow'])->name('customer.loans.show');
+});
+
+// Protected Banking Routes (Require Authentication - Admin/Staff only)
 Route::middleware(['auth'])->group(function () {
 
     // Customer Management Routes
@@ -118,18 +149,6 @@ Route::get('/dashboard', function () {
     return response()->json([
         'message' => 'ZeroCash Banking System Dashboard',
         'statistics' => $stats,
-        'features_implemented' => [
-            '✅ Automatic loan-to-account transfers',
-            '✅ Automatic transaction fee calculation',
-            '✅ Employee/Admin deposit controls',
-            '✅ Automatic notifications',
-            '✅ Dynamic interest rate algorithm',
-            '✅ Auto account number generation',
-            '✅ Auto employee password generation',
-            '✅ Auto customer password generation',
-            '✅ NIDA integration for customer creation',
-            '✅ Employee soft deletion system',
-        ]
     ]);
 })->name('dashboard');
 

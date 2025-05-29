@@ -1,61 +1,185 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ZeroCash Banking System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A comprehensive cashless banking system built with Laravel, designed to minimize cash usage and provide seamless digital banking services.
 
-## About Laravel
+## 🏦 System Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+ZeroCash Banking System is a modern, cashless banking solution that provides:
+- **Customer Interface**: Simple loan application and repayment system
+- **Staff Interface**: Complete banking operations management
+- **Automated Operations**: Intelligent algorithms for fees, interest rates, and transfers
+- **NIDA Integration**: Automated customer verification and account creation
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✅ Core Features (All Implemented & Working)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 1. **Automatic Loan Disbursement**
+- Loans automatically transfer to customer accounts when approved
+- Real-time balance updates and transaction records
+- Automatic status changes from 'approved' to 'active'
 
-## Learning Laravel
+### 2. **Dynamic Transaction Fee Calculation**
+- Automatic fee calculation based on transaction type and amount
+- Support for fixed, percentage, and tiered fee structures
+- Real-time fee preview during transactions
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 3. **Role-Based Deposit Authorization**
+- Only employees, CEO, and administrators can perform deposits
+- Multi-level approval system for deposit processing
+- Complete audit trail for all deposit operations
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 4. **Automatic Notification System**
+- Real-time notifications for all transactions and registrations
+- User-specific notification management
+- Support for multiple notification types (transaction, loan, account)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 5. **Intelligent Interest Rate Algorithm**
+- Dynamic interest rate calculation based on:
+  - Loan amount (higher amounts get lower rates)
+  - Loan term (longer terms get higher rates)
+  - Loan type and risk factors
+- Automatic monthly payment calculation using compound interest formula
 
-## Laravel Sponsors
+### 6. **Auto Account Number Generation**
+- Unique account numbers using format: YYYYMMDDXXXXXX
+- Collision detection and retry mechanism
+- Automatic generation during account creation
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 7. **Employee Password Auto-Generation**
+- Secure 8-character random passwords for new employees
+- Automatic username generation from first and last names
+- Password auto-generation flag tracking
 
-### Premium Partners
+### 8. **Customer Password Auto-Generation**
+- Automatic password generation for new customers
+- Secure password delivery through notifications
+- Support for password reset functionality
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 9. **NIDA Integration**
+- Fetch customer details from National Identification Authority
+- Automatic customer profile creation from NIDA data
+- NIDA verification status tracking
+- Mock implementation with realistic data simulation
 
-## Contributing
+### 10. **Employee Soft Deletion**
+- Employees moved to dormant state instead of permanent deletion
+- Data preservation for audit and compliance
+- Restore functionality for reactivating employees
+- Complete employment history tracking
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🎯 User Interfaces
 
-## Code of Conduct
+### Customer Interface
+- **Dashboard**: Account balance, loan summary, quick actions
+- **Loan Application**: Simple form with real-time calculations
+- **Loan Management**: View all loans with progress tracking
+- **Repayment System**: Cashless payments via account balance or mobile money
+- **Notifications**: Real-time updates on all activities
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Staff Interface
+- **Complete Banking Dashboard**: System statistics and management
+- **Customer Management**: Create, view, and manage customer accounts
+- **Loan Processing**: Approve, reject, and manage loan applications
+- **Transaction Management**: Process transfers, deposits, and withdrawals
+- **Employee Management**: Add, edit, and manage staff with soft deletion
+- **Reporting**: Comprehensive reports and analytics
 
-## Security Vulnerabilities
+## 🔧 Technical Implementation
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Backend Architecture
+- **Framework**: Laravel 11
+- **Database**: MySQL with comprehensive migrations
+- **Authentication**: Role-based access control
+- **Models**: Eloquent ORM with observers and relationships
+- **Services**: NIDA integration service for customer verification
 
-## License
+### Frontend
+- **UI Framework**: Bootstrap 5 with custom styling
+- **JavaScript**: jQuery for dynamic interactions
+- **Responsive Design**: Mobile-friendly interface
+- **Real-time Updates**: AJAX-powered calculations and previews
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Security Features
+- **Role-based Access**: Different interfaces for customers vs staff
+- **Middleware Protection**: Route-level security
+- **Data Validation**: Comprehensive input validation
+- **Soft Deletes**: Data preservation for compliance
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+- PHP 8.1+
+- Composer
+- MySQL 8.0+
+- Node.js & NPM
+
+### Installation Steps
+
+1. **Clone Repository**
+```bash
+git clone <repository-url>
+cd zerocash
+```
+
+2. **Install Dependencies**
+```bash
+composer install
+npm install
+```
+
+3. **Environment Setup**
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+4. **Database Configuration**
+```bash
+# Update .env with your database credentials
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=zerocash
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+5. **Database Migration & Seeding**
+```bash
+php artisan migrate
+php artisan db:seed --class=BankingSystemSeeder
+```
+
+6. **Start Development Server**
+```bash
+php artisan serve
+```
+
+## 👥 Default User Accounts
+
+### System Administrators
+- **Root**: `root` / `root123`
+- **CEO**: `ceo` / `1234`
+- **Admin**: `admin` / `1234`
+
+### Test Customer
+- **Username**: `michael.johnson`
+- **Password**: `rHxvJzNO`
+- **Account**: 20250529488967
+
+## 🧪 Testing
+
+### Run Feature Tests
+```bash
+php artisan banking:test-features
+```
+
+This command tests all 10 core requirements:
+- NIDA customer creation
+- Account number generation
+- Employee creation with auto passwords
+- Transaction fee calculations
+- Loan interest rate algorithms
+- Automatic loan transfers
+- Employee deposit processing
+- Employee soft deletion
+- Automatic notifications

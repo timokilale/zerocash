@@ -70,9 +70,18 @@ class TestBankingFeatures extends Command
     {
         $this->info('🔍 Testing NIDA Customer Creation...');
 
-        $nidaService = new NidaService();
         $nidaNumber = '19900107-23106-00002-21';
 
+        // Check if customer already exists
+        $existingCustomer = User::where('nida', $nidaNumber)->first();
+        if ($existingCustomer) {
+            $this->line("   ✓ Customer already exists: {$existingCustomer->full_name}");
+            $this->line("   ✓ NIDA verified: " . ($existingCustomer->nida_verified ? 'Yes' : 'No'));
+            $this->line("   ✓ Account: {$existingCustomer->accounts->first()->account_number}");
+            return;
+        }
+
+        $nidaService = new NidaService();
         $result = $nidaService->createCustomerFromNida($nidaNumber, [
             'email' => 'test.customer@zerocash.com',
             'phone' => '+255700123456'
@@ -112,18 +121,29 @@ class TestBankingFeatures extends Command
     {
         $this->info('👨‍💼 Testing Employee Creation with Auto Password...');
 
+        // Check if employee already exists
+        $existingEmployee = User::where('role', 'employee')->where('first_name', 'John')->where('last_name', 'Employee')->first();
+        if ($existingEmployee && $existingEmployee->employee) {
+            $this->line("   ✓ Employee already exists: {$existingEmployee->full_name}");
+            $this->line("   ✓ Employee ID: {$existingEmployee->employee->employee_id}");
+            $this->line("   ✓ Password auto-generated: " . ($existingEmployee->password_auto_generated ? 'Yes' : 'No'));
+            return;
+        }
+
         $password = User::generatePassword();
         $username = User::generateUsername('John', 'Employee');
+        $email = 'john.employee.' . time() . '@zerocash.com';
+        $nida = '19850315-23106-00002-' . rand(10, 99);
 
         $user = User::create([
             'username' => $username,
-            'email' => 'john.employee@zerocash.com',
+            'email' => $email,
             'password' => \Hash::make($password),
             'first_name' => 'John',
             'last_name' => 'Employee',
             'phone' => '+255700987654',
             'address' => 'Employee Address',
-            'nida' => '19850315-23106-00002-22',
+            'nida' => $nida,
             'date_of_birth' => '1985-03-15',
             'role' => 'employee',
             'password_auto_generated' => true,

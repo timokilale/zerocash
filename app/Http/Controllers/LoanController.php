@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Loan;
 use App\Models\Account;
 use App\Models\LoanType;
@@ -145,7 +147,7 @@ class LoanController extends Controller
             $loan->update(['status' => 'approved']);
 
             return redirect()->route('loans.show', $loan->id)
-                ->with('success', 'Loan approved successfully! Funds will be transferred automatically.');
+                ->with('success', 'Loan approved successfully!');
 
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Failed to approve loan: ' . $e->getMessage()]);
@@ -204,5 +206,238 @@ class LoanController extends Controller
             'formatted_total_payment' => 'TSh ' . number_format($totalPayment, 2),
             'formatted_total_interest' => 'TSh ' . number_format($totalInterest, 2),
         ]);
+    }
+
+    /**
+     * Customer loan application form.
+     */
+    public function customerApply()
+    {
+        if (Auth::user()->role !== 'customer') {
+            abort(403);
+        }
+
+        $user = Auth::user();
+        $account = $user->accounts()->first();
+
+        if (!$account) {
+            return redirect()->route('customer.dashboard')
+                ->with('error', 'You need an account to apply for a loan. Please contact customer service.');
+        }
+
+        $loanTypes = \App\Models\LoanType::all();
+        $branches = \App\Models\Branch::all();
+
+        return view('customer.loans.apply', compact('account', 'loanTypes', 'branches'));
+    }
+
+    /**
+     * Store customer loan application.
+     */
+    public function customerStore(Request $request)
+    {
+        if (Auth::user()->role !== 'customer') {
+            abort(403);
+        }
+
+        $user = Auth::user();
+        $account = $user->accounts()->first();
+
+        if (!$account) {
+            return back()->with('error', 'You need an account to apply for a loan.');
+        }
+
+        $request->validate([
+            'loan_type_id' => 'required|exists:loan_types,id',
+            'principal_amount' => 'required|numeric|min:10000|max:10000000',
+            'term_months' => 'required|integer|min:1|max:60',
+            'purpose' => 'required|string|max:500',
+        ]);
+
+        $loanType = \App\Models\LoanType::findOrFail($request->loan_type_id);
+
+        // Validate amount against loan type limits
+        if ($request->principal_amount < $loanType->min_amount || $request->principal_amount > $loanType->max_amount) {
+            return back()->withErrors([
+                'principal_amount' => "Loan amount must be between TSh " . number_format($loanType->min_amount, 2) . " and TSh " . number_format($loanType->max_amount, 2)
+            ])->withInput();
+        }
+
+        // Validate term against loan type limits
+        if ($request->term_months < $loanType->min_term_months || $request->term_months > $loanType->max_term_months) {
+            return back()->withErrors([
+                'term_months' => "Loan term must be between {$loanType->min_term_months} and {$loanType->max_term_months} months"
+            ])->withInput();
+        }
+
+        try {
+            $loan = Loan::create([
+                'account_id' => $account->id,
+                'loan_type_id' => $request->loan_type_id,
+                'branch_id' => $account->branch_id,
+                'principal_amount' => $request->principal_amount,
+                'term_months' => $request->term_months,
+                'purpose' => $request->purpose,
+                'status' => 'pending',
+            ]);
+
+            return redirect()->route('customer.loans.show', $loan)
+                ->with('success', 'Loan application submitted successfully! We will review your application and notify you soon.');
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to submit loan application: ' . $e->getMessage()])
+                ->withInput();
+        }
+    }
+
+    /**
+     * Customer loan listing.
+     */
+    public function customerIndex()
+    {
+        if (Auth::user()->role !== 'customer') {
+            abort(403);
+        }
+
+        $user = Auth::user();
+        $loans = collect();
+
+        foreach ($user->accounts as $account) {
+            $loans = $loans->merge($account->loans()->with('loanType', 'branch')->get());
+        }
+
+        return view('customer.loans.index', compact('loans'));
+    }
+
+    /**
+     * Customer loan details.
+     */
+    public function customerShow(Loan $loan)
+    {
+        if (Auth::user()->role !== 'customer') {
+            abort(403);
+        }
+
+        // Check if loan belongs to the customer
+        if (!Auth::user()->accounts->contains($loan->account_id)) {
+            abort(403);
+        }
+
+        $loan->load('loanType', 'branch', 'account');
+
+        return view('customer.loans.show', compact('loan'));
+    }
+
+    /**
+     * Customer loan repayment form.
+     */
+    public function customerRepay(Loan $loan)
+    {
+        if (Auth::user()->role !== 'customer') {
+            abort(403);
+        }
+
+        // Check if loan belongs to the customer
+        if (!Auth::user()->accounts->contains($loan->account_id)) {
+            abort(403);
+        }
+
+        if ($loan->status !== 'active') {
+            return redirect()->route('customer.loans.show', $loan)
+                ->with('error', 'Only active loans can be repaid.');
+        }
+
+        return view('customer.loans.repay', compact('loan'));
+    }
+
+    /**
+     * Process customer loan repayment.
+     */
+    public function customerProcessRepayment(Request $request, Loan $loan)
+    {
+        if (Auth::user()->role !== 'customer') {
+            abort(403);
+        }
+
+        // Check if loan belongs to the customer
+        if (!Auth::user()->accounts->contains($loan->account_id)) {
+            abort(403);
+        }
+
+        if ($loan->status !== 'active') {
+            return back()->with('error', 'Only active loans can be repaid.');
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:1000|max:' . $loan->outstanding_balance,
+            'payment_method' => 'required|in:account_balance,mobile_money',
+        ]);
+
+        $account = $loan->account;
+        $amount = $request->amount;
+
+        // Check if customer has sufficient balance
+        if ($request->payment_method === 'account_balance' && $account->balance < $amount) {
+            return back()->withErrors([
+                'amount' => 'Insufficient account balance. Your current balance is TSh ' . number_format($account->balance, 2)
+            ]);
+        }
+
+        try {
+            DB::transaction(function () use ($loan, $account, $amount, $request) {
+                // Deduct from account if using account balance
+                if ($request->payment_method === 'account_balance') {
+                    $account->debit($amount);
+                }
+
+                // Update loan outstanding balance
+                $loan->outstanding_balance -= $amount;
+
+                // Check if loan is fully paid
+                if ($loan->outstanding_balance <= 0) {
+                    $loan->status = 'completed';
+                    $loan->outstanding_balance = 0;
+                }
+
+                $loan->save();
+
+                // Create transaction record
+                $transaction = \App\Models\Transaction::create([
+                    'sender_account_id' => $account->id,
+                    'receiver_account_id' => null, // Bank account (system)
+                    'transaction_type_id' => \App\Models\TransactionType::where('code', 'LRP')->first()->id ?? 1,
+                    'amount' => $amount,
+                    'description' => "Loan repayment for loan #{$loan->loan_number}",
+                    'reference' => 'LRP-' . time(),
+                    'status' => 'completed',
+                    'processed_at' => now(),
+                    'processed_by' => Auth::id(),
+                ]);
+
+                // Create notification
+                \App\Models\Notification::create([
+                    'user_id' => Auth::id(),
+                    'title' => 'Loan Repayment Successful',
+                    'message' => "Your loan repayment of TSh " . number_format($amount, 2) . " has been processed successfully.",
+                    'type' => 'loan',
+                    'data' => [
+                        'loan_id' => $loan->id,
+                        'transaction_id' => $transaction->id,
+                        'amount' => $amount,
+                    ],
+                ]);
+            });
+
+            $message = 'Loan repayment of TSh ' . number_format($amount, 2) . ' processed successfully!';
+            if ($loan->status === 'completed') {
+                $message .= ' Congratulations! Your loan has been fully paid off.';
+            }
+
+            return redirect()->route('customer.loans.show', $loan)
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to process repayment: ' . $e->getMessage()]);
+        }
     }
 }
