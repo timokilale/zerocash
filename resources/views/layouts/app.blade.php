@@ -13,10 +13,10 @@
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
+
     <!-- Custom CSS -->
     <style>
         :root {
@@ -159,55 +159,71 @@
 
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('banking.dashboard') ? 'active' : '' }}" 
+                            <a class="nav-link {{ request()->routeIs('banking.dashboard') ? 'active' : '' }}"
                                href="{{ route('banking.dashboard') }}">
                                 <i class="fas fa-tachometer-alt me-2"></i>
                                 Dashboard
                             </a>
                         </li>
-                        
+
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}" 
+                            <a class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}"
                                href="{{ route('customers.index') }}">
                                 <i class="fas fa-users me-2"></i>
                                 Customers
                             </a>
                         </li>
-                        
+
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('accounts.*') ? 'active' : '' }}" 
+                            <a class="nav-link {{ request()->routeIs('accounts.*') ? 'active' : '' }}"
                                href="{{ route('accounts.index') }}">
                                 <i class="fas fa-piggy-bank me-2"></i>
                                 Accounts
                             </a>
                         </li>
-                        
+
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('transactions.*') || request()->routeIs('transfer.*') ? 'active' : '' }}" 
+                            <a class="nav-link {{ request()->routeIs('transactions.*') || request()->routeIs('transfer.*') ? 'active' : '' }}"
                                href="{{ route('transactions.index') }}">
                                 <i class="fas fa-exchange-alt me-2"></i>
                                 Transactions
                             </a>
                         </li>
-                        
+
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('loans.*') ? 'active' : '' }}" 
+                            <a class="nav-link {{ request()->routeIs('loans.*') ? 'active' : '' }}"
                                href="{{ route('loans.index') }}">
                                 <i class="fas fa-hand-holding-usd me-2"></i>
                                 Loans
                             </a>
                         </li>
-                        
+
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" 
+                            <a class="nav-link {{ request()->routeIs('loan-settings.*') ? 'active' : '' }}"
+                               href="{{ route('loan-settings.index') }}">
+                                <i class="fas fa-cogs me-2"></i>
+                                Loan Settings
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}"
                                href="{{ route('employees.index') }}">
                                 <i class="fas fa-user-tie me-2"></i>
                                 Employees
                             </a>
                         </li>
-                        
+
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('deposits.*') ? 'active' : '' }}" 
+                            <a class="nav-link {{ request()->routeIs('branches.*') ? 'active' : '' }}"
+                               href="{{ route('branches.index') }}">
+                                <i class="fas fa-building me-2"></i>
+                                Branches
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('deposits.*') ? 'active' : '' }}"
                                href="{{ route('deposits.index') }}">
                                 <i class="fas fa-coins me-2"></i>
                                 Deposits
@@ -227,7 +243,7 @@
                         <div class="text-white-50 small">
                             {{ ucfirst(Auth::user()->role ?? 'User') }}
                         </div>
-                        
+
                         <form method="POST" action="{{ route('logout') }}" class="mt-3">
                             @csrf
                             <button type="submit" class="btn btn-outline-light btn-sm">
@@ -287,10 +303,10 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    
+
     <!-- Custom JS -->
     <script>
         // Auto-hide alerts after 5 seconds

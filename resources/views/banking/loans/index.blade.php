@@ -120,6 +120,7 @@
                                     <th>Monthly Payment</th>
                                     <th>Outstanding</th>
                                     <th>Status</th>
+                                    <th>Eligibility</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -167,41 +168,52 @@
                                         </span>
                                     </td>
                                     <td>
+                                        @if($loan->status === 'pending')
+                                            <button class="btn btn-sm btn-outline-warning"
+                                                    onclick="quickEligibilityCheck({{ $loan->account->user_id }}, {{ $loan->principal_amount }}, {{ $loan->term_months }}, this)"
+                                                    title="Check eligibility">
+                                                <i class="fas fa-shield-alt"></i>
+                                            </button>
+                                        @elseif($loan->status === 'rejected')
+                                            <span class="text-muted">
+                                                <i class="fas fa-times-circle" title="Rejected"></i>
+                                            </span>
+                                        @else
+                                            <span class="text-muted">
+                                                <i class="fas fa-check-circle" title="Processed"></i>
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('loans.show', $loan) }}" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             @if($loan->status === 'pending')
-                                                <form action="{{ route('loans.approve', $loan) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-outline-success" 
-                                                            onclick="return confirm('Are you sure you want to approve this loan?')">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('loans.reject', $loan) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                            onclick="return confirm('Are you sure you want to reject this loan?')">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-outline-success"
+                                                        data-bs-toggle="modal" data-bs-target="#quickApproveModal{{ $loan->id }}"
+                                                        title="Approve loan">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        data-bs-toggle="modal" data-bs-target="#quickRejectModal{{ $loan->id }}"
+                                                        title="Reject loan">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
                                             @endif
                                             @if($loan->status === 'approved')
-                                                <form action="{{ route('loans.disburse', $loan) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-outline-info"
-                                                            onclick="return confirm('Are you sure you want to disburse this loan?')">
-                                                        <i class="fas fa-money-bill-wave"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-outline-info"
+                                                        data-bs-toggle="modal" data-bs-target="#quickDisburseModal{{ $loan->id }}"
+                                                        title="Disburse loan">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                </button>
                                             @endif
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="11" class="text-center py-4">
+                                    <td colspan="12" class="text-center py-4">
                                         <div class="text-muted">
                                             <i class="fas fa-hand-holding-usd fa-3x mb-3"></i>
                                             <p>No loans found.</p>
@@ -226,3 +238,150 @@
     </div>
 </div>
 @endsection
+
+<!-- Quick Action Modals for each loan -->
+@foreach($loans as $loan)
+    @if($loan->status === 'pending')
+        <!-- Quick Approve Modal -->
+        <div class="modal fade" id="quickApproveModal{{ $loan->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h6 class="modal-title">
+                            <i class="fas fa-check-circle me-1"></i>Approve Loan
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <i class="fas fa-question-circle fa-3x text-success mb-3"></i>
+                        <h6>Approve loan {{ $loan->loan_number }}?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{ $loan->account->user->name }}</strong><br>
+                            TSh {{ number_format($loan->principal_amount, 2) }}
+                        </p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="{{ route('loans.approve', $loan) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="fas fa-check me-1"></i>Approve
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Reject Modal -->
+        <div class="modal fade" id="quickRejectModal{{ $loan->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h6 class="modal-title">
+                            <i class="fas fa-times-circle me-1"></i>Reject Loan
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                        <h6>Reject loan {{ $loan->loan_number }}?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{ $loan->account->user->name }}</strong><br>
+                            TSh {{ number_format($loan->principal_amount, 2) }}
+                        </p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="{{ route('loans.reject', $loan) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fas fa-ban me-1"></i>Reject
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($loan->status === 'approved')
+        <!-- Quick Disburse Modal -->
+        <div class="modal fade" id="quickDisburseModal{{ $loan->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h6 class="modal-title">
+                            <i class="fas fa-money-bill-wave me-1"></i>Disburse Loan
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <i class="fas fa-hand-holding-usd fa-3x text-info mb-3"></i>
+                        <h6>Disburse loan {{ $loan->loan_number }}?</h6>
+                        <p class="text-muted mb-0">
+                            <strong>{{ $loan->account->user->name }}</strong><br>
+                            TSh {{ number_format($loan->principal_amount, 2) }}
+                        </p>
+                        <small class="text-muted">Amount will be transferred to account</small>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="{{ route('loans.disburse', $loan) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-info">
+                                <i class="fas fa-money-bill-wave me-1"></i>Disburse
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+@endforeach
+
+@push('scripts')
+<script>
+function quickEligibilityCheck(userId, amount, termMonths, button) {
+    const originalContent = button.innerHTML;
+
+    // Show loading state
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+
+    // Make AJAX request
+    fetch('{{ route("loan-settings.eligibility-preview") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: new URLSearchParams({
+            'user_id': userId,
+            'amount': amount,
+            'term_months': termMonths
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.eligible) {
+            button.className = 'btn btn-sm btn-success';
+            button.innerHTML = '<i class="fas fa-check-circle"></i>';
+            button.title = `✅ Eligible (Risk: ${data.risk_score}/100, Interest: ${data.recommended_interest_adjustment > 0 ? '+' : ''}${data.recommended_interest_adjustment}%)`;
+        } else {
+            button.className = 'btn btn-sm btn-danger';
+            button.innerHTML = '<i class="fas fa-times-circle"></i>';
+            button.title = `❌ Not Eligible: ${data.reason}`;
+        }
+        button.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        button.className = 'btn btn-sm btn-warning';
+        button.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        button.title = 'Error checking eligibility';
+        button.disabled = false;
+    });
+}
+</script>
+@endpush

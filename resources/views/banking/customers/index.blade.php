@@ -82,20 +82,28 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="{{ route('customers.show', $customer->id) }}" 
+                                                <a href="{{ route('customers.show', $customer->id) }}"
                                                    class="btn btn-sm btn-outline-primary" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="{{ route('customers.edit', $customer->id) }}" 
+                                                <a href="{{ route('customers.edit', $customer->id) }}"
                                                    class="btn btn-sm btn-outline-secondary" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 @if($customer->accounts->count() === 0)
-                                                    <button type="button" class="btn btn-sm btn-outline-success" 
-                                                            data-bs-toggle="modal" 
+                                                    <button type="button" class="btn btn-sm btn-outline-success"
+                                                            data-bs-toggle="modal"
                                                             data-bs-target="#createAccountModal{{ $customer->id }}"
                                                             title="Create Account">
                                                         <i class="fas fa-plus"></i>
+                                                    </button>
+                                                @endif
+                                                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'root')
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteCustomerModal{{ $customer->id }}"
+                                                            title="Delete Customer">
+                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                 @endif
                                             </div>
@@ -134,7 +142,7 @@
                                                             </div>
                                                             <div class="mb-3">
                                                                 <label for="initial_deposit" class="form-label">Initial Deposit (Optional)</label>
-                                                                <input type="number" name="initial_deposit" class="form-control" 
+                                                                <input type="number" name="initial_deposit" class="form-control"
                                                                        min="0" step="0.01" placeholder="0.00">
                                                             </div>
                                                         </div>
@@ -143,6 +151,64 @@
                                                             <button type="submit" class="btn btn-primary">Create Account</button>
                                                         </div>
                                                     </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <!-- Delete Customer Modal -->
+                                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'root')
+                                        <div class="modal fade" id="deleteCustomerModal{{ $customer->id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>Delete Customer
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="alert alert-warning">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                                            <strong>Warning!</strong> This action will permanently delete the customer and all associated data.
+                                                        </div>
+
+                                                        <h6>Customer Details:</h6>
+                                                        <ul class="list-unstyled">
+                                                            <li><strong>Name:</strong> {{ $customer->first_name }} {{ $customer->last_name }}</li>
+                                                            <li><strong>Email:</strong> {{ $customer->email }}</li>
+                                                            <li><strong>Phone:</strong> {{ $customer->phone }}</li>
+                                                            <li><strong>Accounts:</strong> {{ $customer->accounts->count() }}</li>
+                                                            @if($customer->accounts->count() > 0)
+                                                                <li><strong>Total Balance:</strong> TSh {{ number_format($customer->accounts->sum('balance'), 2) }}</li>
+                                                            @endif
+                                                        </ul>
+
+                                                        @if($customer->accounts->count() > 0)
+                                                            <div class="alert alert-danger">
+                                                                <i class="fas fa-exclamation-circle me-2"></i>
+                                                                <strong>This customer has {{ $customer->accounts->count() }} account(s) with a total balance of TSh {{ number_format($customer->accounts->sum('balance'), 2) }}.</strong>
+                                                                <br>All accounts and transaction history will be permanently deleted.
+                                                            </div>
+                                                        @endif
+
+                                                        <p class="text-muted mb-0">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            This action cannot be undone. Please ensure you have backed up any necessary data.
+                                                        </p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            <i class="fas fa-times me-1"></i>Cancel
+                                                        </button>
+                                                        <form method="POST" action="{{ route('customers.destroy', $customer->id) }}" class="d-inline">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-danger">
+                                                                <i class="fas fa-trash me-1"></i>Delete Customer
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

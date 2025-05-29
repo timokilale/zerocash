@@ -183,7 +183,7 @@
                     <!-- Submit Buttons -->
                     <div class="d-flex justify-content-between">
                         <div>
-                            @if($customer->accounts->count() === 0)
+                            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'root')
                                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                                     <i class="fas fa-trash me-1"></i>
                                     Delete Customer
@@ -208,30 +208,65 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-@if($customer->accounts->count() === 0)
+@if(auth()->user()->role === 'admin' || auth()->user()->role === 'root')
 <div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete Customer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Customer
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning!</strong> This action cannot be undone.
+                    <strong>Warning!</strong> This action will permanently delete the customer and all associated data.
                 </div>
-                <p>Are you sure you want to delete <strong>{{ $customer->first_name }} {{ $customer->last_name }}</strong>?</p>
-                <p class="text-muted">This customer will be permanently removed from the system.</p>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Customer Information:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Name:</strong> {{ $customer->first_name }} {{ $customer->last_name }}</li>
+                            <li><strong>Email:</strong> {{ $customer->email }}</li>
+                            <li><strong>Phone:</strong> {{ $customer->phone }}</li>
+                            <li><strong>Status:</strong> {{ ucfirst($customer->status) }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Associated Data:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Accounts:</strong> {{ $customer->accounts->count() }}</li>
+                            @if($customer->accounts->count() > 0)
+                                <li><strong>Total Balance:</strong> TSh {{ number_format($customer->accounts->sum('balance'), 2) }}</li>
+                            @endif
+                        </ul>
+                    </div>
+                </div>
+
+                @if($customer->accounts->count() > 0)
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>This customer has {{ $customer->accounts->count() }} account(s) with a total balance of TSh {{ number_format($customer->accounts->sum('balance'), 2) }}.</strong>
+                        <br>All accounts, transactions, loans, and related data will be permanently deleted.
+                    </div>
+                @endif
+
+                <p class="text-muted mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <strong>This action cannot be undone.</strong> Please ensure you have backed up any necessary data.
+                </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
                 <form method="POST" action="{{ route('customers.destroy', $customer->id) }}" class="d-inline">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-1"></i>
-                        Delete Customer
+                        <i class="fas fa-trash me-1"></i>Delete Customer Permanently
                     </button>
                 </form>
             </div>

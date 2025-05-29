@@ -11,10 +11,12 @@
                     <i class="fas fa-users text-primary me-2"></i>
                     Employee Management
                 </h1>
-                <a href="{{ route('employees.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i>
-                    Add New Employee
-                </a>
+                @if(in_array(auth()->user()->role, ['admin', 'root']))
+                    <a href="{{ route('employees.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Add New Employee
+                    </a>
+                @endif
             </div>
 
             <!-- Statistics Cards -->
@@ -113,7 +115,7 @@
                                     <th>Employee ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
-                                    <th>Phone</th>
+                                    <th>Role</th>
                                     <th>Position</th>
                                     <th>Branch</th>
                                     <th>Salary</th>
@@ -132,18 +134,28 @@
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar avatar-sm me-2">
-                                                <div class="avatar-initial bg-primary rounded-circle">
-                                                    {{ substr($employee->user->name, 0, 1) }}
-                                                </div>
+                                            <div class="avatar-sm me-2">
+                                                @if($employee->user->avatar_url)
+                                                    <img src="{{ $employee->user->avatar_url }}"
+                                                         alt="{{ $employee->user->first_name }}"
+                                                         class="employee-list-avatar rounded-circle">
+                                                @else
+                                                    <div class="employee-list-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center">
+                                                        {{ $employee->user->avatar_initials }}
+                                                    </div>
+                                                @endif
                                             </div>
                                             <div>
-                                                <div class="fw-bold">{{ $employee->user->name }}</div>
+                                                <div class="fw-bold">{{ $employee->user->first_name }} {{ $employee->user->last_name }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td>{{ $employee->user->email }}</td>
-                                    <td>{{ $employee->user->phone }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $employee->user->role === 'admin' || $employee->user->role === 'root' ? 'danger' : ($employee->user->role === 'manager' ? 'warning' : 'secondary') }}">
+                                            {{ ucfirst($employee->user->role) }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <span class="badge bg-info">{{ $employee->position }}</span>
                                     </td>
@@ -162,27 +174,31 @@
                                             <a href="{{ route('employees.show', $employee) }}" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            @if(!$employee->deleted_at)
-                                                <a href="{{ route('employees.edit', $employee) }}" class="btn btn-sm btn-outline-warning">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('employees.destroy', $employee) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                            onclick="return confirm('Are you sure you want to mark this employee as dormant?')">
-                                                        <i class="fas fa-user-times"></i>
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <form action="{{ route('employees.restore', $employee->id) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" class="btn btn-sm btn-outline-success"
-                                                            onclick="return confirm('Are you sure you want to restore this employee?')">
-                                                        <i class="fas fa-user-check"></i>
-                                                    </button>
-                                                </form>
+                                            @if(in_array(auth()->user()->role, ['admin', 'root']))
+                                                @if(!$employee->deleted_at)
+                                                    <a href="{{ route('employees.edit', $employee) }}" class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    @if(!in_array($employee->user->role, ['admin', 'root']))
+                                                        <form action="{{ route('employees.destroy', $employee) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                                    onclick="return confirm('Are you sure you want to mark this employee as dormant?')">
+                                                                <i class="fas fa-user-times"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                @else
+                                                    <form action="{{ route('employees.restore', $employee->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit" class="btn btn-sm btn-outline-success"
+                                                                onclick="return confirm('Are you sure you want to restore this employee?')">
+                                                            <i class="fas fa-user-check"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             @endif
                                         </div>
                                     </td>
@@ -213,4 +229,25 @@
         </div>
     </div>
 </div>
+@push('styles')
+<style>
+.employee-list-avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border: 2px solid #007bff;
+}
+
+.employee-list-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #007bff;
+}
+</style>
+@endpush
+
 @endsection

@@ -70,8 +70,8 @@ class Loan extends Model
             $totalPayment = $loan->monthly_payment * $loan->term_months;
             $loan->outstanding_balance = $totalPayment;
 
-            // Set due date
-            if ($loan->issued_date) {
+            // Set due date if not already set
+            if (!$loan->due_date && $loan->issued_date) {
                 $loan->due_date = \Carbon\Carbon::parse($loan->issued_date)
                     ->addMonths($loan->term_months);
             }
@@ -204,7 +204,17 @@ class Loan extends Model
                 // Mark loan as transferred and active
                 $this->auto_transferred = true;
                 $this->status = 'active';
-                $this->issued_date = now()->toDateString();
+
+                // Only set issued_date if not already set
+                if (!$this->issued_date) {
+                    $this->issued_date = now()->toDateString();
+                }
+
+                // Set due_date if not already set
+                if (!$this->due_date) {
+                    $this->due_date = now()->addMonths($this->term_months)->toDateString();
+                }
+
                 $this->save();
 
                 // Create notification
@@ -277,6 +287,7 @@ class Loan extends Model
      */
     public function getAmountPaidAttribute(): float
     {
-        return $this->total_payment - $this->outstanding_balance;
+        $totalPayment = $this->monthly_payment * $this->term_months;
+        return $totalPayment - $this->outstanding_balance;
     }
 }

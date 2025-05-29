@@ -300,10 +300,34 @@ The main dashboard provides:
 5. Employee receives login credentials
 
 #### Employee Operations
-- **View Employees** - List all staff including dormant employees
-- **Employee Details** - Complete employee profile
-- **Edit Employee** - Update employee information
-- **Dormant Management** - Soft delete and restore employees
+- **View Employees** - List all staff including management and dormant employees
+- **Employee Details** - Complete employee profile with role and position
+- **Edit Employee** - Update employee information (admin/root only)
+- **Dormant Management** - Soft delete and restore employees (admin/root only)
+- **Role-Based Access** - Only administrators can create, edit, or delete employee records
+
+#### Employee Features
+1. **Universal Employee Records** - All management users (CEO, admins, managers) have employee records
+2. **Role-Based Permissions** - Only admin and root users can manage employee records
+3. **Management Protection** - Admin and root employees cannot be marked as dormant
+4. **Comprehensive View** - Employee list shows user roles, positions, and management status
+5. **Branch Integration** - Branch views show all employees with manager highlighting
+
+### Branch Management
+
+#### Branch Operations
+- **View Branches** - List all bank branches with statistics
+- **Branch Details** - Complete branch information with employees, accounts, and loans
+- **Create Branch** - Add new bank branches with manager assignment
+- **Edit Branch** - Update branch information and reassign managers
+- **Delete Branch** - Remove branches (only if no associated records exist)
+
+#### Branch Features
+1. **Unique Branch Codes** - Each branch has a unique identifier code
+2. **Manager Assignment** - Assign admin/staff users as branch managers
+3. **Data Integrity** - Prevents deletion of branches with active records
+4. **Statistics Dashboard** - View employee, account, and loan counts per branch
+5. **Validation** - Ensures all branch references in forms are valid existing branches
 
 ### Deposit Processing
 

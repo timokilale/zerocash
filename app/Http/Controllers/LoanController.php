@@ -10,6 +10,7 @@ use App\Models\Account;
 use App\Models\LoanType;
 use App\Models\Branch;
 use App\Models\User;
+use App\Services\LoanEligibilityService;
 
 class LoanController extends Controller
 {
@@ -144,7 +145,11 @@ class LoanController extends Controller
         }
 
         try {
-            $loan->update(['status' => 'approved']);
+            $loan->update([
+                'status' => 'approved',
+                'issued_date' => now()->toDateString(),
+                'due_date' => now()->addMonths($loan->term_months)->toDateString(),
+            ]);
 
             return redirect()->route('loans.show', $loan->id)
                 ->with('success', 'Loan approved successfully!');
@@ -225,6 +230,15 @@ class LoanController extends Controller
                 ->with('error', 'You need an account to apply for a loan. Please contact customer service.');
         }
 
+        // Check basic eligibility (multiple loans restriction)
+        $eligibilityService = new LoanEligibilityService();
+        $basicEligibility = $eligibilityService->checkEligibility($user, 100000, 12); // Basic check with dummy values
+
+        if (!$basicEligibility['eligible'] && $basicEligibility['reason'] === 'Multiple loans not allowed') {
+            return redirect()->route('customer.loans.index')
+                ->with('error', $basicEligibility['details']);
+        }
+
         $loanTypes = \App\Models\LoanType::all();
         $branches = \App\Models\Branch::all();
 
@@ -267,6 +281,16 @@ class LoanController extends Controller
         if ($request->term_months < $loanType->min_term_months || $request->term_months > $loanType->max_term_months) {
             return back()->withErrors([
                 'term_months' => "Loan term must be between {$loanType->min_term_months} and {$loanType->max_term_months} months"
+            ])->withInput();
+        }
+
+        // Check full eligibility
+        $eligibilityService = new LoanEligibilityService();
+        $eligibilityCheck = $eligibilityService->checkEligibility($user, $request->principal_amount, $request->term_months);
+
+        if (!$eligibilityCheck['eligible']) {
+            return back()->withErrors([
+                'eligibility' => $eligibilityCheck['details']
             ])->withInput();
         }
 

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Employee Details - ' . $employee->user->name)
+@section('title', 'Employee Details - ' . $employee->user->first_name . ' ' . $employee->user->last_name)
 
 @section('content')
 <div class="container-fluid">
@@ -9,7 +9,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0 text-gray-800">
                     <i class="fas fa-user text-primary me-2"></i>
-                    Employee Details - {{ $employee->user->name }}
+                    Employee Details - {{ $employee->user ? $employee->user->first_name . ' ' . $employee->user->last_name : 'Unknown User' }}
                 </h1>
                 <div>
                     <a href="{{ route('employees.index') }}" class="btn btn-secondary me-2">
@@ -54,10 +54,16 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-3 text-center">
-                                    <div class="avatar avatar-xl mb-3">
-                                        <div class="avatar-initial bg-primary rounded-circle d-flex align-items-center justify-content-center">
-                                            <span class="fs-1 text-white">{{ substr($employee->user->name, 0, 1) }}</span>
-                                        </div>
+                                    <div class="avatar-container mb-3">
+                                        @if($employee->user && $employee->user->avatar_url)
+                                            <img src="{{ $employee->user->avatar_url }}"
+                                                 alt="{{ $employee->user->first_name }} {{ $employee->user->last_name }}"
+                                                 class="employee-avatar rounded-circle">
+                                        @else
+                                            <div class="employee-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center">
+                                                <span class="avatar-initials">{{ $employee->user ? $employee->user->avatar_initials : 'U' }}</span>
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="mb-2">
                                         @if($employee->deleted_at)
@@ -66,6 +72,14 @@
                                             <span class="badge bg-success fs-6">Active</span>
                                         @endif
                                     </div>
+                                    @if(!$employee->deleted_at && in_array(auth()->user()->role, ['admin', 'root']))
+                                        <div class="mt-2">
+                                            <a href="{{ route('employees.edit', $employee) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-camera me-1"></i>
+                                                Update Photo
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="col-md-9">
                                     <table class="table table-borderless">
@@ -75,23 +89,23 @@
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Full Name:</td>
-                                            <td>{{ $employee->user->name }}</td>
+                                            <td>{{ $employee->user ? $employee->user->first_name . ' ' . $employee->user->last_name : 'N/A' }}</td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Email:</td>
-                                            <td>{{ $employee->user->email }}</td>
+                                            <td>{{ $employee->user ? $employee->user->email : 'N/A' }}</td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Phone:</td>
-                                            <td>{{ $employee->user->phone }}</td>
+                                            <td>{{ $employee->user ? $employee->user->phone : 'N/A' }}</td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Address:</td>
-                                            <td>{{ $employee->user->address }}</td>
+                                            <td>{{ $employee->user ? $employee->user->address : 'N/A' }}</td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Account Created:</td>
-                                            <td>{{ $employee->user->created_at->format('M d, Y') }}</td>
+                                            <td>{{ $employee->user ? $employee->user->created_at->format('M d, Y') : 'N/A' }}</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -285,6 +299,48 @@
 
 @push('styles')
 <style>
+/* Employee Avatar Styles */
+.employee-avatar {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 4px solid #007bff;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.employee-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+}
+
+.employee-avatar-placeholder {
+    width: 150px;
+    height: 150px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 4px solid #007bff;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.employee-avatar-placeholder:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+}
+
+.avatar-initials {
+    font-size: 3rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.avatar-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Timeline Styles */
 .timeline {
     position: relative;
     padding-left: 30px;

@@ -211,5 +211,40 @@ class BankingSystemSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ]);
+
+        // Create employee records for management users
+        $managementUsers = [
+            [
+                'user_id' => 1, // root user
+                'position' => 'System Administrator',
+                'salary' => 2000000, // 2M TSh
+                'hire_date' => '2020-01-01',
+            ],
+            [
+                'user_id' => 2, // CEO user
+                'position' => 'Chief Executive Officer',
+                'salary' => 5000000, // 5M TSh
+                'hire_date' => '2020-01-01',
+            ],
+            [
+                'user_id' => 3, // admin user
+                'position' => 'System Administrator',
+                'salary' => 1500000, // 1.5M TSh
+                'hire_date' => '2020-01-01',
+            ],
+        ];
+
+        foreach ($managementUsers as $employeeData) {
+            DB::table('employees')->insert([
+                'user_id' => $employeeData['user_id'],
+                'branch_id' => 1, // Main Branch
+                'employee_id' => 'EMP' . date('Y') . str_pad($employeeData['user_id'], 4, '0', STR_PAD_LEFT),
+                'position' => $employeeData['position'],
+                'salary' => $employeeData['salary'],
+                'hire_date' => $employeeData['hire_date'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

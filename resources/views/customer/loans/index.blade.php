@@ -26,7 +26,7 @@
                                 </div>
                                 <div class="card-body">
                                     <p class="text-muted small mb-2">Loan #{{ $loan->loan_number }}</p>
-                                    
+
                                     <div class="loan-details">
                                         <div class="detail-row">
                                             <span class="label">Principal Amount:</span>
@@ -48,10 +48,20 @@
                                             <span class="label">Outstanding:</span>
                                             <span class="value text-warning">TSh {{ number_format($loan->outstanding_balance, 2) }}</span>
                                         </div>
+                                        <div class="detail-row">
+                                            <span class="label">Applied Date:</span>
+                                            <span class="value">{{ $loan->created_at->format('M d, Y') }}</span>
+                                        </div>
                                         @if($loan->issued_date)
                                             <div class="detail-row">
                                                 <span class="label">Issued Date:</span>
                                                 <span class="value">{{ \Carbon\Carbon::parse($loan->issued_date)->format('M d, Y') }}</span>
+                                            </div>
+                                        @endif
+                                        @if($loan->due_date)
+                                            <div class="detail-row">
+                                                <span class="label">Due Date:</span>
+                                                <span class="value text-danger">{{ \Carbon\Carbon::parse($loan->due_date)->format('M d, Y') }}</span>
                                             </div>
                                         @endif
                                     </div>
@@ -59,11 +69,13 @@
                                     @if($loan->status === 'active')
                                         <div class="progress mb-3">
                                             @php
-                                                $paidPercentage = (($loan->principal_amount - $loan->outstanding_balance) / $loan->principal_amount) * 100;
+                                                $totalPayment = $loan->monthly_payment * $loan->term_months;
+                                                $paidAmount = $totalPayment - $loan->outstanding_balance;
+                                                $paidPercentage = $totalPayment > 0 ? ($paidAmount / $totalPayment) * 100 : 0;
                                             @endphp
-                                            <div class="progress-bar bg-success" role="progressbar" 
-                                                 style="width: {{ $paidPercentage }}%" 
-                                                 aria-valuenow="{{ $paidPercentage }}" 
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                 style="width: {{ $paidPercentage }}%"
+                                                 aria-valuenow="{{ $paidPercentage }}"
                                                  aria-valuemin="0" aria-valuemax="100">
                                                 {{ number_format($paidPercentage, 1) }}% Paid
                                             </div>
@@ -149,16 +161,16 @@
         border: none;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    
+
     .loan-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
-    
+
     .loan-details {
         margin-bottom: 15px;
     }
-    
+
     .detail-row {
         display: flex;
         justify-content: space-between;
@@ -166,46 +178,46 @@
         padding-bottom: 5px;
         border-bottom: 1px solid #f0f0f0;
     }
-    
+
     .detail-row:last-child {
         border-bottom: none;
         margin-bottom: 0;
     }
-    
+
     .detail-row .label {
         font-weight: 500;
         color: #666;
         font-size: 0.9rem;
     }
-    
+
     .detail-row .value {
         font-weight: 600;
         font-size: 0.9rem;
     }
-    
+
     .summary-item {
         padding: 20px;
         border-radius: 10px;
         background: #f8f9fa;
         margin-bottom: 15px;
     }
-    
+
     .summary-item h4 {
         margin-bottom: 5px;
         font-weight: bold;
     }
-    
+
     .progress {
         height: 8px;
         border-radius: 4px;
     }
-    
+
     .card-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-radius: 15px 15px 0 0 !important;
     }
-    
+
     .card-header .badge {
         background: rgba(255,255,255,0.2) !important;
         color: white !important;

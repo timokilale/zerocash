@@ -173,7 +173,7 @@
                                     <option value="">Select Branch</option>
                                     @foreach($branches as $branch)
                                         <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
-                                            {{ $branch->name }} - {{ $branch->location }}
+                                            {{ $branch->name }} - {{ $branch->code }}
                                         </option>
                                     @endforeach
                                 </select>

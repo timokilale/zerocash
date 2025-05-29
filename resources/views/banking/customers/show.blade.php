@@ -13,6 +13,12 @@
             <i class="fas fa-edit me-1"></i>
             Edit Customer
         </a>
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'root')
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCustomerModal">
+                <i class="fas fa-trash me-1"></i>
+                Delete Customer
+            </button>
+        @endif
     </div>
 @endsection
 
@@ -31,10 +37,10 @@
                 <div class="avatar-circle mx-auto mb-3" style="width: 80px; height: 80px; font-size: 24px;">
                     {{ strtoupper(substr($customer->first_name, 0, 1)) }}{{ strtoupper(substr($customer->last_name, 0, 1)) }}
                 </div>
-                
+
                 <h4 class="mb-1">{{ $customer->first_name }} {{ $customer->last_name }}</h4>
                 <p class="text-muted mb-3">{{ $customer->username }}</p>
-                
+
                 <div class="row text-start">
                     <div class="col-12 mb-2">
                         <strong>Customer ID:</strong>
@@ -124,7 +130,7 @@
                                         </div>
                                         <p class="card-text">
                                             <strong>Account #:</strong> {{ $account->account_number }}<br>
-                                            <strong>Balance:</strong> 
+                                            <strong>Balance:</strong>
                                             <span class="text-success fw-bold">TSh {{ number_format($account->balance, 2) }}</span><br>
                                             <strong>Branch:</strong> {{ $account->branch->name }}
                                         </p>
@@ -248,13 +254,13 @@
                         <select name="branch_id" class="form-select" required>
                             <option value="">Select Branch</option>
                             @foreach(\App\Models\Branch::all() as $branch)
-                                <option value="{{ $branch->id }}">{{ $branch->name }} - {{ $branch->location }}</option>
+                                <option value="{{ $branch->id }}">{{ $branch->name }} - {{ $branch->code }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="initial_deposit" class="form-label">Initial Deposit (Optional)</label>
-                        <input type="number" name="initial_deposit" class="form-control" 
+                        <input type="number" name="initial_deposit" class="form-control"
                                min="0" step="0.01" placeholder="0.00">
                     </div>
                 </div>
@@ -266,6 +272,103 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Customer Modal -->
+@if(auth()->user()->role === 'admin' || auth()->user()->role === 'root')
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Customer
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning!</strong> This action will permanently delete the customer and all associated data.
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Customer Information:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Name:</strong> {{ $customer->first_name }} {{ $customer->last_name }}</li>
+                            <li><strong>Email:</strong> {{ $customer->email }}</li>
+                            <li><strong>Phone:</strong> {{ $customer->phone }}</li>
+                            <li><strong>NIDA:</strong> {{ $customer->nida ?? 'Not provided' }}</li>
+                            <li><strong>Status:</strong> {{ ucfirst($customer->status) }}</li>
+                            <li><strong>Joined:</strong> {{ $customer->created_at->format('M d, Y') }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Associated Data:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Accounts:</strong> {{ $customer->accounts->count() }}</li>
+                            @if($customer->accounts->count() > 0)
+                                <li><strong>Total Balance:</strong> TSh {{ number_format($customer->accounts->sum('balance'), 2) }}</li>
+                            @endif
+                            @php
+                                $transactionCount = \App\Models\Transaction::whereHas('senderAccount', function($q) use ($customer) {
+                                    $q->where('user_id', $customer->id);
+                                })->orWhereHas('receiverAccount', function($q) use ($customer) {
+                                    $q->where('user_id', $customer->id);
+                                })->count();
+
+                                $loanCount = \App\Models\Loan::whereHas('account', function($q) use ($customer) {
+                                    $q->where('user_id', $customer->id);
+                                })->count();
+                            @endphp
+                            <li><strong>Transactions:</strong> {{ $transactionCount }}</li>
+                            <li><strong>Loans:</strong> {{ $loanCount }}</li>
+                            <li><strong>Notifications:</strong> {{ $customer->notifications->count() }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                @if($customer->accounts->count() > 0)
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>This customer has {{ $customer->accounts->count() }} account(s) with a total balance of TSh {{ number_format($customer->accounts->sum('balance'), 2) }}.</strong>
+                        <br>All accounts, transactions, loans, and related data will be permanently deleted.
+                    </div>
+                @endif
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>What will be deleted:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Customer profile and personal information</li>
+                        <li>All associated bank accounts</li>
+                        <li>All transaction history</li>
+                        <li>All loan records</li>
+                        <li>All notifications</li>
+                        <li>Any other related data</li>
+                    </ul>
+                </div>
+
+                <p class="text-muted mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <strong>This action cannot be undone.</strong> Please ensure you have backed up any necessary data before proceeding.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form method="POST" action="{{ route('customers.destroy', $customer->id) }}" class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Delete Customer Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @push('styles')

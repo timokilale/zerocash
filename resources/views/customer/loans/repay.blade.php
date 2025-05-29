@@ -25,17 +25,19 @@
                             <p><strong>Account Balance:</strong> <span class="text-success fw-bold">TSh {{ number_format($loan->account->balance, 2) }}</span></p>
                         </div>
                     </div>
-                    
+
                     <!-- Progress Bar -->
                     <div class="mt-3">
                         @php
-                            $paidPercentage = (($loan->principal_amount - $loan->outstanding_balance) / $loan->principal_amount) * 100;
+                            $totalPayment = $loan->monthly_payment * $loan->term_months;
+                            $paidAmount = $totalPayment - $loan->outstanding_balance;
+                            $paidPercentage = $totalPayment > 0 ? ($paidAmount / $totalPayment) * 100 : 0;
                         @endphp
                         <label class="form-label">Loan Progress</label>
                         <div class="progress">
-                            <div class="progress-bar bg-success" role="progressbar" 
-                                 style="width: {{ $paidPercentage }}%" 
-                                 aria-valuenow="{{ $paidPercentage }}" 
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 style="width: {{ $paidPercentage }}%"
+                                 aria-valuenow="{{ $paidPercentage }}"
                                  aria-valuemin="0" aria-valuemax="100">
                                 {{ number_format($paidPercentage, 1) }}% Paid
                             </div>
@@ -52,7 +54,7 @@
                 <div class="card-body">
                     <form action="{{ route('customer.loans.process-repayment', $loan) }}" method="POST" id="repaymentForm">
                         @csrf
-                        
+
                         <!-- Payment Method -->
                         <div class="row mb-3">
                             <div class="col-12">
@@ -60,7 +62,7 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-check payment-method-card">
-                                            <input class="form-check-input" type="radio" name="payment_method" 
+                                            <input class="form-check-input" type="radio" name="payment_method"
                                                    id="account_balance" value="account_balance" checked>
                                             <label class="form-check-label" for="account_balance">
                                                 <div class="payment-method-content">
@@ -74,7 +76,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-check payment-method-card">
-                                            <input class="form-check-input" type="radio" name="payment_method" 
+                                            <input class="form-check-input" type="radio" name="payment_method"
                                                    id="mobile_money" value="mobile_money">
                                             <label class="form-check-label" for="mobile_money">
                                                 <div class="payment-method-content">
@@ -94,8 +96,8 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="amount" class="form-label">Repayment Amount (TSh) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('amount') is-invalid @enderror" 
-                                       id="amount" name="amount" value="{{ old('amount', $loan->monthly_payment) }}" 
+                                <input type="number" class="form-control @error('amount') is-invalid @enderror"
+                                       id="amount" name="amount" value="{{ old('amount', $loan->monthly_payment) }}"
                                        min="1000" max="{{ $loan->outstanding_balance }}" step="100" required>
                                 @error('amount')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -105,12 +107,12 @@
                             <div class="col-md-6">
                                 <label class="form-label">Quick Amount Selection</label>
                                 <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-outline-primary btn-sm quick-amount" 
+                                    <button type="button" class="btn btn-outline-primary btn-sm quick-amount"
                                             data-amount="{{ $loan->monthly_payment }}">
                                         Monthly Payment (TSh {{ number_format($loan->monthly_payment, 2) }})
                                     </button>
                                     @if($loan->outstanding_balance != $loan->monthly_payment)
-                                        <button type="button" class="btn btn-outline-success btn-sm quick-amount" 
+                                        <button type="button" class="btn btn-outline-success btn-sm quick-amount"
                                                 data-amount="{{ $loan->outstanding_balance }}">
                                             Full Payment (TSh {{ number_format($loan->outstanding_balance, 2) }})
                                         </button>
@@ -188,32 +190,32 @@
         cursor: pointer;
         height: 100%;
     }
-    
+
     .payment-method-card:hover {
         border-color: #007bff;
         background-color: #f8f9fa;
     }
-    
+
     .payment-method-card input[type="radio"]:checked + label {
         border-color: #007bff;
         background-color: #e3f2fd;
     }
-    
+
     .payment-method-content {
         text-align: center;
         padding: 10px;
     }
-    
+
     .form-check-input {
         position: absolute;
         top: 10px;
         right: 10px;
     }
-    
+
     .quick-amount {
         font-size: 0.875rem;
     }
-    
+
     .progress {
         height: 10px;
         border-radius: 5px;
@@ -233,7 +235,7 @@ $(document).ready(function() {
 
     // Update summary when amount changes
     $('#amount').on('input', updateSummary);
-    
+
     // Update summary when payment method changes
     $('input[name="payment_method"]').change(function() {
         updateSummary();

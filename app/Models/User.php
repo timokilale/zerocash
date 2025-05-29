@@ -34,6 +34,7 @@ class User extends Authenticatable
         'password_auto_generated',
         'nida_verified',
         'nida_data',
+        'avatar',
     ];
 
     /**
@@ -69,6 +70,25 @@ class User extends Authenticatable
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    /**
+     * Get the user's avatar URL or return null if no avatar.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if ($this->avatar && \Storage::disk('public')->exists($this->avatar)) {
+            return \Storage::disk('public')->url($this->avatar);
+        }
+        return null;
+    }
+
+    /**
+     * Get the user's avatar initials for fallback display.
+     */
+    public function getAvatarInitialsAttribute(): string
+    {
+        return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
     }
 
     /**

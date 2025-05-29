@@ -18,33 +18,21 @@
                     </a>
                     @if($loan->status === 'pending')
                         <div class="btn-group">
-                            <form action="{{ route('loans.approve', $loan) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-success" 
-                                        onclick="return confirm('Are you sure you want to approve this loan?')">
-                                    <i class="fas fa-check me-1"></i>
-                                    Approve
-                                </button>
-                            </form>
-                            <form action="{{ route('loans.reject', $loan) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-danger"
-                                        onclick="return confirm('Are you sure you want to reject this loan?')">
-                                    <i class="fas fa-times me-1"></i>
-                                    Reject
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveLoanModal">
+                                <i class="fas fa-check me-1"></i>
+                                Approve
+                            </button>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectLoanModal">
+                                <i class="fas fa-times me-1"></i>
+                                Reject
+                            </button>
                         </div>
                     @endif
                     @if($loan->status === 'approved')
-                        <form action="{{ route('loans.disburse', $loan) }}" method="POST" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-info"
-                                    onclick="return confirm('Are you sure you want to disburse this loan?')">
-                                <i class="fas fa-money-bill-wave me-1"></i>
-                                Disburse Loan
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#disburseLoanModal">
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            Disburse Loan
+                        </button>
                     @endif
                 </div>
             </div>
@@ -113,6 +101,10 @@
                                         <tr>
                                             <td class="fw-bold">Branch:</td>
                                             <td>{{ $loan->branch->name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Application Date:</td>
+                                            <td>{{ $loan->created_at->format('M d, Y') }}</td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Issued Date:</td>
@@ -206,20 +198,21 @@
                             <div class="mb-3">
                                 <label class="form-label text-muted">Progress</label>
                                 @php
-                                    $paidAmount = $loan->principal_amount - $loan->outstanding_balance;
-                                    $progressPercentage = $loan->principal_amount > 0 ? ($paidAmount / $loan->principal_amount) * 100 : 0;
+                                    $totalPayment = $loan->monthly_payment * $loan->term_months;
+                                    $paidAmount = $totalPayment - $loan->outstanding_balance;
+                                    $progressPercentage = $totalPayment > 0 ? ($paidAmount / $totalPayment) * 100 : 0;
                                 @endphp
                                 <div class="progress mb-2">
-                                    <div class="progress-bar bg-success" role="progressbar" 
-                                         style="width: {{ $progressPercentage }}%" 
-                                         aria-valuenow="{{ $progressPercentage }}" 
+                                    <div class="progress-bar bg-success" role="progressbar"
+                                         style="width: {{ $progressPercentage }}%"
+                                         aria-valuenow="{{ $progressPercentage }}"
                                          aria-valuemin="0" aria-valuemax="100">
                                         {{ number_format($progressPercentage, 1) }}%
                                     </div>
                                 </div>
                                 <small class="text-muted">
-                                    Paid: TSh {{ number_format($paidAmount, 2) }} / 
-                                    TSh {{ number_format($loan->principal_amount, 2) }}
+                                    Paid: TSh {{ number_format($paidAmount, 2) }} /
+                                    TSh {{ number_format($totalPayment, 2) }}
                                 </small>
                             </div>
                         </div>
@@ -250,6 +243,26 @@
                         </div>
                     </div>
 
+                    <!-- Eligibility Check -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-warning">
+                                <i class="fas fa-shield-alt me-2"></i>Eligibility Check
+                            </h6>
+                            <button class="btn btn-sm btn-outline-warning" onclick="checkEligibility()">
+                                <i class="fas fa-sync-alt me-1"></i>Check Now
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="eligibilityResult">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-search fa-2x mb-2"></i>
+                                    <p class="mb-0">Click "Check Now" to verify customer eligibility for this loan application.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Loan Type Details -->
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
@@ -272,3 +285,270 @@
     </div>
 </div>
 @endsection
+
+<!-- Confirmation Modals -->
+@if($loan->status === 'pending')
+<!-- Approve Loan Modal -->
+<div class="modal fade" id="approveLoanModal" tabindex="-1" aria-labelledby="approveLoanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="approveLoanModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Approve Loan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Important:</strong> Approving this loan will make it eligible for disbursement.
+                </div>
+
+                <h6>Loan Details:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Customer:</strong> {{ $loan->account->user->name }}</li>
+                    <li><strong>Loan Number:</strong> {{ $loan->loan_number }}</li>
+                    <li><strong>Amount:</strong> TSh {{ number_format($loan->principal_amount, 2) }}</li>
+                    <li><strong>Term:</strong> {{ $loan->term_months }} months</li>
+                    <li><strong>Monthly Payment:</strong> TSh {{ number_format($loan->monthly_payment, 2) }}</li>
+                </ul>
+
+                <p class="text-muted mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    This action cannot be undone. Please ensure you have reviewed the customer's eligibility.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form action="{{ route('loans.approve', $loan) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i>Yes, Approve Loan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Loan Modal -->
+<div class="modal fade" id="rejectLoanModal" tabindex="-1" aria-labelledby="rejectLoanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectLoanModalLabel">
+                    <i class="fas fa-times-circle me-2"></i>Reject Loan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> Rejecting this loan will permanently decline the application.
+                </div>
+
+                <h6>Loan Details:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Customer:</strong> {{ $loan->account->user->name }}</li>
+                    <li><strong>Loan Number:</strong> {{ $loan->loan_number }}</li>
+                    <li><strong>Amount:</strong> TSh {{ number_format($loan->principal_amount, 2) }}</li>
+                    <li><strong>Term:</strong> {{ $loan->term_months }} months</li>
+                </ul>
+
+                <div class="mb-3">
+                    <label for="rejectionReason" class="form-label">Reason for Rejection (Optional):</label>
+                    <textarea class="form-control" id="rejectionReason" name="reason" rows="3"
+                              placeholder="Enter reason for rejection..."></textarea>
+                </div>
+
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    The customer will be notified of this decision.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form action="{{ route('loans.reject', $loan) }}" method="POST" class="d-inline">
+                    @csrf
+                    <input type="hidden" name="reason" id="hiddenRejectionReason">
+                    <button type="submit" class="btn btn-danger" onclick="document.getElementById('hiddenRejectionReason').value = document.getElementById('rejectionReason').value">
+                        <i class="fas fa-ban me-1"></i>Yes, Reject Loan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+@if($loan->status === 'approved')
+<!-- Disburse Loan Modal -->
+<div class="modal fade" id="disburseLoanModal" tabindex="-1" aria-labelledby="disburseLoanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="disburseLoanModalLabel">
+                    <i class="fas fa-money-bill-wave me-2"></i>Disburse Loan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Ready for Disbursement:</strong> This loan has been approved and is ready to be disbursed.
+                </div>
+
+                <h6>Disbursement Details:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Customer:</strong> {{ $loan->account->user->name }}</li>
+                    <li><strong>Account Number:</strong> {{ $loan->account->account_number }}</li>
+                    <li><strong>Loan Amount:</strong> TSh {{ number_format($loan->principal_amount, 2) }}</li>
+                    <li><strong>Current Account Balance:</strong> TSh {{ number_format($loan->account->balance, 2) }}</li>
+                    <li><strong>New Balance After Disbursement:</strong> TSh {{ number_format($loan->account->balance + $loan->principal_amount, 2) }}</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    The loan amount will be automatically transferred to the customer's account.
+                </div>
+
+                <p class="text-muted mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    This action will activate the loan and start the repayment schedule.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form action="{{ route('loans.disburse', $loan) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-money-bill-wave me-1"></i>Yes, Disburse Loan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+@push('scripts')
+<script>
+function checkEligibility() {
+    const resultDiv = document.getElementById('eligibilityResult');
+    const checkButton = document.querySelector('[onclick="checkEligibility()"]');
+
+    // Show loading state
+    checkButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Checking...';
+    checkButton.disabled = true;
+
+    resultDiv.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-warning" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 mb-0">Analyzing customer eligibility...</p>
+        </div>
+    `;
+
+    // Make AJAX request to check eligibility
+    fetch('{{ route("loan-settings.eligibility-preview") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: new URLSearchParams({
+            'user_id': '{{ $loan->account->user_id }}',
+            'amount': '{{ $loan->principal_amount }}',
+            'term_months': '{{ $loan->term_months }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        let html = '';
+
+        if (data.eligible) {
+            html = `
+                <div class="alert alert-success mb-0">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>✅ ELIGIBLE FOR LOAN</strong>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Risk Score</small>
+                            <div class="fw-bold">${data.risk_score || 'N/A'}/100</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Interest Adjustment</small>
+                            <div class="fw-bold ${data.recommended_interest_adjustment > 0 ? 'text-warning' : data.recommended_interest_adjustment < 0 ? 'text-success' : 'text-muted'}">
+                                ${data.recommended_interest_adjustment > 0 ? '+' : ''}${data.recommended_interest_adjustment || 0}%
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <small class="text-muted">
+                        <strong>Details:</strong> ${data.details}
+                    </small>
+                </div>
+            `;
+        } else {
+            html = `
+                <div class="alert alert-danger mb-0">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-times-circle text-danger me-2"></i>
+                        <strong>❌ NOT ELIGIBLE</strong>
+                    </div>
+                    <hr class="my-2">
+                    <div class="mb-2">
+                        <small class="text-muted">Reason</small>
+                        <div class="fw-bold">${data.reason}</div>
+                    </div>
+                    <hr class="my-2">
+                    <small class="text-muted">
+                        <strong>Details:</strong> ${data.details}
+                    </small>
+                </div>
+            `;
+        }
+
+        resultDiv.innerHTML = html;
+
+        // Reset button
+        checkButton.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Check Again';
+        checkButton.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `
+            <div class="alert alert-warning mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Error checking eligibility</strong>
+                <br><small>Please try again or contact system administrator.</small>
+            </div>
+        `;
+
+        // Reset button
+        checkButton.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Check Now';
+        checkButton.disabled = false;
+    });
+}
+
+// Auto-check eligibility for pending loans when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    @if($loan->status === 'pending')
+        // Auto-check for pending loans after a short delay
+        setTimeout(function() {
+            checkEligibility();
+        }, 1000);
+    @endif
+});
+</script>
+@endpush

@@ -196,15 +196,51 @@ class CustomerController extends Controller
     }
 
     /**
-     * Remove the specified customer (soft delete).
+     * Remove the specified customer and all associated data.
      */
     public function destroy(string $id)
     {
-        $customer = User::where('role', 'customer')->findOrFail($id);
-        $customer->delete();
+        // Only allow admin and root users to delete customers
+        if (!in_array(auth()->user()->role, ['admin', 'root'])) {
+            return back()->withErrors(['error' => 'Unauthorized. Only administrators can delete customers.']);
+        }
 
-        return redirect()->route('customers.index')
-            ->with('success', 'Customer deactivated successfully!');
+        $customer = User::where('role', 'customer')->findOrFail($id);
+
+        try {
+            \DB::transaction(function () use ($customer) {
+                // Get all customer accounts
+                $accounts = $customer->accounts;
+
+                foreach ($accounts as $account) {
+                    // Delete all transactions related to this account
+                    \App\Models\Transaction::where('sender_account_id', $account->id)
+                        ->orWhere('receiver_account_id', $account->id)
+                        ->delete();
+
+                    // Delete all loans related to this account
+                    \App\Models\Loan::where('account_id', $account->id)->delete();
+
+                    // Delete all deposits related to this account
+                    \App\Models\Deposit::where('account_id', $account->id)->delete();
+
+                    // Delete the account
+                    $account->delete();
+                }
+
+                // Delete all notifications for this customer
+                $customer->notifications()->delete();
+
+                // Delete the customer
+                $customer->delete();
+            });
+
+            return redirect()->route('customers.index')
+                ->with('success', 'Customer and all associated data deleted successfully!');
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to delete customer: ' . $e->getMessage()]);
+        }
     }
 
     /**

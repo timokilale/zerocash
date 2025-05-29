@@ -69,20 +69,26 @@
                                 <span class="label">Outstanding Balance:</span>
                                 <span class="value text-warning">TSh {{ number_format($loan->outstanding_balance, 2) }}</span>
                             </div>
+                            <div class="info-row">
+                                <span class="label">Application Date:</span>
+                                <span class="value">{{ $loan->created_at->format('M d, Y') }}</span>
+                            </div>
                             @if($loan->issued_date)
                                 <div class="info-row">
                                     <span class="label">Issue Date:</span>
                                     <span class="value">{{ \Carbon\Carbon::parse($loan->issued_date)->format('M d, Y') }}</span>
                                 </div>
                             @endif
-                            <div class="info-row">
-                                <span class="label">Application Date:</span>
-                                <span class="value">{{ $loan->created_at->format('M d, Y') }}</span>
-                            </div>
+                            @if($loan->due_date)
+                                <div class="info-row">
+                                    <span class="label">Due Date:</span>
+                                    <span class="value text-danger">{{ \Carbon\Carbon::parse($loan->due_date)->format('M d, Y') }}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
@@ -91,21 +97,22 @@
                         <div class="card-body">
                             @if($loan->status === 'active' || $loan->status === 'completed')
                                 @php
-                                    $paidAmount = $loan->principal_amount - $loan->outstanding_balance;
-                                    $paidPercentage = ($paidAmount / $loan->principal_amount) * 100;
+                                    $totalPayment = $loan->monthly_payment * $loan->term_months;
+                                    $paidAmount = $totalPayment - $loan->outstanding_balance;
+                                    $paidPercentage = $totalPayment > 0 ? ($paidAmount / $totalPayment) * 100 : 0;
                                 @endphp
-                                
+
                                 <div class="progress-container mb-3">
                                     <div class="progress">
-                                        <div class="progress-bar bg-success" role="progressbar" 
-                                             style="width: {{ $paidPercentage }}%" 
-                                             aria-valuenow="{{ $paidPercentage }}" 
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                             style="width: {{ $paidPercentage }}%"
+                                             aria-valuenow="{{ $paidPercentage }}"
                                              aria-valuemin="0" aria-valuemax="100">
                                             {{ number_format($paidPercentage, 1) }}%
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="progress-stats">
                                     <div class="stat-item">
                                         <span class="stat-label">Amount Paid:</span>
@@ -215,13 +222,13 @@
         color: white;
         border: none;
     }
-    
+
     .badge-status {
         font-size: 1rem;
         padding: 8px 16px;
         border-radius: 20px;
     }
-    
+
     .info-row {
         display: flex;
         justify-content: space-between;
@@ -229,52 +236,52 @@
         padding: 10px 0;
         border-bottom: 1px solid #f0f0f0;
     }
-    
+
     .info-row:last-child {
         border-bottom: none;
     }
-    
+
     .info-row .label {
         font-weight: 500;
         color: #666;
     }
-    
+
     .info-row .value {
         font-weight: 600;
         text-align: right;
     }
-    
+
     .progress {
         height: 15px;
         border-radius: 10px;
         background-color: #e9ecef;
     }
-    
+
     .progress-bar {
         border-radius: 10px;
         font-size: 0.8rem;
         font-weight: 600;
     }
-    
+
     .progress-stats {
         margin-top: 15px;
     }
-    
+
     .stat-item {
         display: flex;
         justify-content: space-between;
         margin-bottom: 8px;
     }
-    
+
     .stat-label {
         font-weight: 500;
         color: #666;
     }
-    
+
     .stat-value {
         font-weight: 600;
     }
-    
+
     .card-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;

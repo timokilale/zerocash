@@ -14,6 +14,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BranchController;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -123,9 +124,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('loans/{loan}/disburse', [LoanController::class, 'disburse'])->name('loans.disburse');
     Route::post('calculate-loan-details', [LoanController::class, 'calculateLoanDetails'])->name('calculate.loan.details');
 
+    // Loan Settings Routes
+    Route::get('loan-settings', [App\Http\Controllers\LoanSettingsController::class, 'index'])->name('loan-settings.index');
+    Route::put('loan-settings', [App\Http\Controllers\LoanSettingsController::class, 'update'])->name('loan-settings.update');
+    Route::post('loan-settings/eligibility-preview', [App\Http\Controllers\LoanSettingsController::class, 'eligibilityPreview'])->name('loan-settings.eligibility-preview');
+
     // Employee Management Routes
     Route::resource('employees', EmployeeController::class);
     Route::patch('employees/{employee}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
+
+    // Branch Management Routes
+    Route::resource('branches', BranchController::class);
 
     // Deposit Management Routes
     Route::resource('deposits', DepositController::class);
